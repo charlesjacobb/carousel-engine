@@ -172,5 +172,6 @@ setting. Pick a variable face with `wdth`.
 
 ## Licence
 
-MIT, see `LICENSE.md`. The bundled fonts keep their own OFL terms, included
-in `tokens/fonts/`.
+MIT, see `LICENSE`. The bundled fonts keep their own OFL terms and the
+generated images are MIT like the rest — `NOTICE.md` spells out which asset is
+which, so nobody has to guess before shipping a fork.

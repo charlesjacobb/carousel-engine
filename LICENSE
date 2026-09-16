@@ -19,14 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-The fonts bundled in `tokens/fonts/` are not covered by the licence above.
-They are licensed under the SIL Open Font License 1.1 and keep their own terms:
-
-- Saira — Copyright 2020 The Saira Project Authors
-- Geist Mono — Copyright 2024 The Geist Project Authors
-
-The full licence text ships with each family, in
-`tokens/fonts/Saira-OFL.txt` and `tokens/fonts/GeistMono-OFL.txt`.
