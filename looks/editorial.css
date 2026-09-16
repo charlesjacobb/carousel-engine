@@ -1,0 +1,338 @@
+/* editorial.css — design direction «EDITORIAL ON PAPER».
+   Counter-design to the terminal look: a magazine spread instead of a
+   program window. Warm paper tone, hairlines instead of boxes, a wide
+   outer margin with a running head, the condensed display face carrying the
+   type image, the paper accent as the sole colour.
+
+   This file overrides ONLY within the drop classes (.ed, .ed-cover,
+   .ed-grid, .ed-cta). carousel.css and tokens.css stay untouched.
+
+   Base grid (1080 wide):
+     0    → 148   outer margin, carries the vertical running head
+     148         hairline over the full height
+     172  → 1008 type area (836 wide), on slide 02 two columns of 418 each
+     1008 → 1080 bleed margin, carries the folio number up top
+
+   TYPOGRAPHY FLOOR: body copy 27px, labels 24px. Nothing smaller.
+*/
+
+:root {
+  /* No fifth color value: the paper is a MATERIAL, not an accent. The two
+     neutrals are derived from it, so the hairlines don't sit cold grey
+     on a warm ground. Chromatically it stays ink + the paper accent. */
+  --ed-paper: #FAF7F1;   /* warm off-white — the paper sheet               */
+  --ed-tint:  #F1EBE0;   /* the same sheet, one step darker (coupon)       */
+  --ed-rule:  #D6CFC3;   /* hairline, mixed from the paper                */
+  --ed-mute:  #6B655D;   /* secondary text, warm grey                     */
+  --ed-ink:   #0A0A0A;
+  --ed-accent:   #C4420A;   /* the paper accent — the only colour on the sheet */
+}
+
+/* ---------------------------------------------------------------- Sheet */
+
+.slide.dashboard.paper.ed { background: var(--ed-paper); }
+
+/* RUNNING HEAD, LYING DOWN INSTEAD OF STANDING UP.
+   Before, a hairline ran the full height here at x=148, and next to it,
+   rotated 90 degrees, the running head. It was cut, and the reason is not a
+   matter of taste: a carousel gets skimmed on a phone in under a second. Text
+   you first have to tilt your head for doesn't get read in that second —
+   it gets perceived as ornament, and an ornament that looks like type
+   reads as a mistake. In a printed magazine the standing running head
+   works because you can turn the issue. A feed can't be turned.
+   The running head stays, it just lies down: horizontal above the type
+   area, separated by the same hairline. Same function, legible. The type
+   area moves to the normal margin (72px) as a result and gets 100px wider. */
+.slide.dashboard.paper.ed .wrap {
+  top: 108px;
+  left: 72px;
+  right: 72px;
+  bottom: 132px;
+}
+
+.slide.dashboard.paper.ed .wrap::before {
+  content: var(--brand-handle);
+  display: block;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 24px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--ed-mute);
+  padding-right: 170px;          /* keeps the line clear of the folio number */
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--ed-rule);
+}
+
+/* EDITOR'S NOTE — the element that gives the sheet authority.
+   A sentence that doesn't explain but places things in context, marked
+   by a red marginal rule. In non-fiction, that's the marginal note; it
+   signals that someone stands behind the page who already knows how
+   it ends. */
+.slide.dashboard.paper.ed .marg {
+  margin-top: 26px;
+  padding-left: 26px;
+  border-left: 3px solid var(--ed-accent);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-variation-settings: 'wght' 500, 'wdth' 100;
+  font-size: 28px;
+  line-height: 1.34;
+  max-width: 700px;
+  color: var(--ed-ink);
+}
+.slide.dashboard.paper.ed .marg em { font-style: italic; color: var(--ed-accent); }
+
+/* Folio number in the bleed margin, level with the running head line */
+.slide.dashboard.paper.ed .counter {
+  top: 108px;
+  right: 72px;
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: .12em;
+  color: var(--ed-ink);
+}
+
+/* --------------------------------------------------------- Running head */
+
+/* padding-right keeps the line clear of the folio number. Without it the
+   running head on the cover ran straight into the «01/03» — the wrap
+   happens silently, the collision doesn't. */
+.slide.dashboard.paper.ed .crumb {
+  font-size: 25px;
+  font-weight: 500;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--ed-mute);
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--ed-rule);
+}
+.slide.dashboard.paper.ed .crumb i { color: var(--ed-accent); font-style: normal; }
+
+/* ------------------------------------------------------------- Headline */
+/* pre-line: the line break lives in the deck (\n), not in the chance of
+   the column width. A magazine headline breaks where the sentence breathes. */
+.slide.dashboard.paper.ed .headline {
+  margin-top: 34px;
+  white-space: pre-line;
+  font-family: var(--font-display);
+  font-variation-settings: 'wght' 900, 'wdth' 64;
+  font-weight: 900;
+  line-height: .87;
+  /* -.028em was too tight for the wdth-64 axis: in «BABYSITTING.» the two
+     T crossbars collided and produced one continuous bar with a 1px tear
+     in it — that reads as a rendering bug, not a ligature.
+     -.010em keeps the setting tight and lets the letters stay letters. */
+  letter-spacing: -.010em;
+  color: var(--ed-ink);
+  text-shadow: none;
+}
+.slide.dashboard.paper.ed .headline em { color: var(--ed-accent); }
+
+/* Mid-tone in the display italic — the page's second voice */
+.slide.dashboard.paper.ed .paren {
+  margin-top: 32px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-variation-settings: 'wght' 600, 'wdth' 100;
+  font-weight: 600;
+  font-size: 44px;
+  line-height: 1.14;
+  letter-spacing: -.012em;
+  color: var(--ed-ink);
+}
+.slide.dashboard.paper.ed .paren em { color: var(--ed-accent); font-style: italic; }
+
+/* Standfirst: narrow measure, like a magazine intro */
+.slide.dashboard.paper.ed .sub {
+  margin-top: 38px;
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1.6;
+  max-width: 660px;
+  color: var(--ed-mute);
+}
+
+/* ----------------------------------------------------------- Running foot */
+
+.slide.dashboard.paper.ed .foot {
+  margin-top: 26px;
+  padding-top: 24px;
+  border-top: 1px solid var(--ed-rule);
+  font-size: 24px;
+  letter-spacing: .2em;
+  color: var(--ed-mute);
+  align-items: center;
+}
+/* Wordmark: the wordmark stays exclusively here, and exclusively small. */
+.slide.dashboard.paper.ed .mark {
+  font-size: 42px;
+  text-transform: none;
+  letter-spacing: -.02em;
+  color: var(--ed-ink);
+}
+.slide.dashboard.paper.ed .mark i { color: var(--ed-accent); }
+
+/* ================================================================ 01 COVER */
+
+/* Cover treatment: the title page carries the type, not an ornament. Set
+   in three lines at full column width — that closes the gap between
+   the standfirst and the title line that used to need a blind-embossed
+   «04» to hide it. The outline numeral is cut with no replacement: it
+   overhung the column end by 4px and, of all places, sat right over the
+   red 04 of the title line — two fours stacked on top of each other with
+   nothing to do with one another. A gap is better than a watermark; a
+   big headline is better than either. */
+.slide.dashboard.paper.ed-cover .headline { font-size: 132px; }
+
+/* Title line at the page foot: four numbers, four names, one rule above
+   them. The issue's table of contents. */
+.slide.dashboard.paper.ed-cover .strip {
+  margin-top: auto;
+  gap: 22px;
+  border-top: 1px solid var(--ed-rule);
+  padding-top: 28px;
+}
+.slide.dashboard.paper.ed-cover .strip .it .v {
+  font-variation-settings: 'wght' 900, 'wdth' 68;
+  font-size: 76px;
+  letter-spacing: -.05em;
+  color: var(--ed-accent);
+}
+.slide.dashboard.paper.ed-cover .strip .it .k {
+  margin-top: 10px;
+  font-size: 24px;
+  line-height: 1.3;
+  letter-spacing: .05em;
+  color: var(--ed-ink);
+}
+
+/* ================================================================== 02 GRID */
+
+.slide.dashboard.paper.ed-grid .headline { font-size: 92px; }
+
+/* No box. The columns are made from hairlines — that's the whole
+   difference between a «card» and a type area. */
+/* 34px, not 46px: the display face sets taller per cell than the one this
+   look was first drawn with, and the grid needs the 12px more than the gap
+   above it does. lint.py caught the collision — the panel content ran 52px
+   past its box and landed on the footer rule. */
+.slide.dashboard.paper.ed-grid .panel {
+  margin-top: 34px;
+  border: 0;
+  background: transparent;
+}
+.slide.dashboard.paper.ed-grid .pbody { padding: 0; }
+
+/* No closing rule under the grid: the footer rule closes the page.
+   Two parallel hairlines 34px apart read as a typesetting error. */
+.slide.dashboard.paper.ed-grid .stats {
+  background: transparent;
+  gap: 0;
+}
+.slide.dashboard.paper.ed-grid .stats .tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  background: transparent;
+  border-top: 1px solid var(--ed-rule);
+  padding: 20px 40px 22px 0;
+}
+.slide.dashboard.paper.ed-grid .stats .tile:nth-child(even) {
+  padding: 20px 0 22px 40px;
+  border-left: 1px solid var(--ed-rule);
+}
+/* The number is the anchor of the cell, not the heading. */
+.slide.dashboard.paper.ed-grid .stats .tile .k {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 30px;
+  letter-spacing: .06em;
+  color: var(--ed-accent);
+}
+.slide.dashboard.paper.ed-grid .stats .tile .v {
+  margin-top: 12px;
+  font-variation-settings: 'wght' 900, 'wdth' 70;
+  font-size: 46px;
+  line-height: 1.02;
+  letter-spacing: -.025em;
+  color: var(--ed-ink);
+}
+.slide.dashboard.paper.ed-grid .stats .tile .s {
+  margin-top: 14px;
+  font-family: var(--font-mono);
+  font-size: 27px;
+  line-height: 1.4;
+  color: var(--ed-mute);
+}
+
+/* ================================================================== 03 CTA */
+
+.slide.dashboard.paper.ed-cta .headline { font-size: 112px; }
+
+/* The reply coupon — a print convention instead of a button convention.
+   Dashed edge, tinted sheet, centered. The one field on the page
+   that wants to be filled in. */
+/* The coupon takes up the rest of the page instead of leaving it as a
+   gap above the footer rule (before: 112px of empty space between the
+   coupon edge and the footer stroke — the page read as cut off). It
+   grows, its content stays centered: a field is allowed to be big, a
+   field with content on top and air underneath is not. */
+.slide.dashboard.paper.ed-cta .panel {
+  margin-top: 40px;
+  flex: 1 1 auto;
+  display: flex;
+  border: 2px dashed var(--ed-rule);
+  background: var(--ed-tint);
+}
+.slide.dashboard.paper.ed-cta .pbody {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 36px 48px 40px;
+}
+
+.slide.dashboard.paper.ed-cta .region > .rlabel {
+  font-size: 24px;
+  letter-spacing: .2em;
+  color: var(--ed-mute);
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.slide.dashboard.paper.ed-cta .term {
+  border: 0;
+  padding: 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 30px;
+  line-height: 1.5;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ed-mute);
+}
+/* The keyword is the slide's type image — display, not mono. */
+.slide.dashboard.paper.ed-cta .term b {
+  display: inline-block;
+  margin-top: 6px;
+  font-family: var(--font-display);
+  font-variation-settings: 'wght' 900, 'wdth' 74;
+  font-weight: 900;
+  font-size: 132px;
+  line-height: 1;
+  letter-spacing: -.02em;
+  color: var(--ed-accent);
+}
+
+.slide.dashboard.paper.ed-cta .pnote {
+  margin-top: 30px;
+  border-top: 1px dashed var(--ed-rule);
+  padding-top: 22px;
+  font-size: 27px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--ed-mute);
+}

@@ -1,0 +1,17 @@
+# Your own palette and faces. render.py loads this last if present, so it wins
+# over tokens.css and every look. Never committed.
+tokens/brand.local.css
+tokens/fonts/*.local.*
+
+# Render output
+stills/
+video/
+out/
+frames/
+.*.render.html
+.*.lint.html
+.*.animate.html
+
+__pycache__/
+*.pyc
+.DS_Store

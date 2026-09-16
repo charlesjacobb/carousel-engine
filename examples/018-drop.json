@@ -1,0 +1,85 @@
+{
+  "slug": "018-drop",
+  "title": "DROP - the fifth look. A stepped, ragged stack instead of a justified block.",
+  "css": ["../looks/drop.css"],
+  "slides": [
+    {
+      "type": "cover",
+      "name": "01-drop-hook",
+      "variant": ["dr"],
+      "surface": "cord",
+      "stack": ["IT DOESN'T", "SIT.", "IT FALLS."],
+      "sub": "Poster squeezes every line to the same measure. <em>Drop lets go of them.</em> Same engine, same words, one stylesheet apart.",
+      "footer": ["STEP", "RAGGED", "NO GLOW", "ONE FILE"]
+    },
+    {
+      "type": "dashboard",
+      "name": "02-five-looks",
+      "variant": ["dr"],
+      "surface": "grain",
+      "crumb": "looks / five directions",
+      "headline": "ONE GRAMMAR.\nFIVE <em>ANSWERS</em>.",
+      "blocks": [
+        {
+          "kind": "stats",
+          "cols": 1,
+          "items": [
+            { "k": "01", "v": "POSTER", "s": "Justified type block. The words are the image." },
+            { "k": "02", "v": "CONSOLE", "s": "A still frame from real software. Structure carries the density." },
+            { "k": "03", "v": "EDITORIAL", "s": "A magazine spread on paper. Hairlines, not boxes." },
+            { "k": "04", "v": "DIAGRAM", "s": "A technical drawing on a gridded sheet." }
+          ]
+        }
+      ],
+      "foot": "and this one, falling"
+    },
+    {
+      "type": "dashboard",
+      "name": "03-how-to-switch",
+      "variant": ["dr"],
+      "surface": "grain",
+      "crumb": "deck.json / two lines",
+      "headline": "A LOOK IS TWO\nLINES OF <em>JSON</em>.",
+      "blocks": [
+        {
+          "kind": "term",
+          "text": "<i># load the stylesheet for the whole deck</i>\n\"css\": [\"../looks/drop.css\"]\n\n<i># switch it on for one slide</i>\n\"variant\": [\"dr\"]"
+        },
+        {
+          "kind": "note",
+          "text": "every look is namespaced, so one carousel can run all five without the stylesheets overwriting each other."
+        }
+      ],
+      "foot": "swipe"
+    },
+    {
+      "type": "dashboard",
+      "name": "04-what-never-moves",
+      "variant": ["dr"],
+      "surface": "grain",
+      "crumb": "invariants / the guard block",
+      "headline": "WHAT A LOOK IS\n<em>NOT</em> ALLOWED TO TOUCH.",
+      "blocks": [
+        {
+          "kind": "stats",
+          "cols": 1,
+          "items": [
+            { "k": "01", "v": "THE WORDMARK", "s": "Same height above the bottom edge on every slide of every deck." },
+            { "k": "02", "v": "THE TYPE FLOOR", "s": "Nothing below 22px. That is about 8pt on a phone." },
+            { "k": "03", "v": "THE CONTRAST", "s": "Measured on the rendered pixels, not argued about." }
+          ]
+        }
+      ],
+      "foot": "one more"
+    },
+    {
+      "type": "cover",
+      "name": "05-drop-cta",
+      "variant": ["dr"],
+      "surface": "cord",
+      "stack": ["FIVE LOOKS.", "ONE JSON FILE.", "PICK ONE."],
+      "sub": "Copy an example, change the words, render, lint, post. <em>The engine is free.</em>",
+      "footer": ["POSTER", "CONSOLE", "EDITORIAL", "DIAGRAM", "DROP"]
+    }
+  ]
+}

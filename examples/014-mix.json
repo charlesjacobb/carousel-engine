@@ -1,0 +1,189 @@
+{
+  "slug": "014-mix",
+  "title": "MIX - one carousel, four design directions. Poster -> Diagram -> Paper -> Console -> Poster.",
+  "css": [
+    "../looks/poster.css",
+    "../looks/console.css",
+    "../looks/editorial.css",
+    "../looks/diagram.css"
+  ],
+  "slides": [
+    {
+      "type": "cover",
+      "name": "01-poster-hook",
+      "surface": "kord",
+      "variant": [
+        "pk",
+        "pk-open"
+      ],
+      "stack": [
+        "FOUR GATES.",
+        "ZERO",
+        "BABYSITTING."
+      ],
+      "sub": "THE FOUR LOCKS EVERY AUTONOMOUS AGENT NEEDS. <em>GATE ONE IS AN EMPTY FILE.</em>",
+      "footer": [
+        "KILL SWITCH",
+        "DENY FLOOR",
+        "DAY CAP",
+        "LANE CAP"
+      ]
+    },
+    {
+      "type": "dashboard",
+      "name": "02-diagram-path",
+      "surface": "korn",
+      "variant": [
+        "dg",
+        "trunk"
+      ],
+      "crumb": "fig. 01 / one unsupervised run",
+      "headline": "ONE RUN.\n<em>FOUR HARD STOPS.</em>",
+      "ptitle": "run starts · reference trace",
+      "pill": {
+        "text": "unsupervised",
+        "alert": true
+      },
+      "foot": "fig. 01 · swipe",
+      "blocks": [
+        {
+          "kind": "rows",
+          "label": "the path, in the order the gates fire",
+          "grow": true,
+          "items": [
+            {
+              "dot": "alert",
+              "lb": "GATE 01 · KILL SWITCH",
+              "meta": "one file on disk → every run exits.",
+              "val": "HALT"
+            },
+            {
+              "dot": "ok",
+              "lb": "GATE 02 · DENY FLOOR",
+              "meta": ".env, .ssh, keys: never readable.",
+              "val": "REFUSE"
+            },
+            {
+              "dot": "ok",
+              "lb": "GATE 03 · DAILY CAP",
+              "meta": "spend hits the day cap → runs stop.",
+              "val": "STOP"
+            },
+            {
+              "dot": "ok",
+              "lb": "GATE 04 · PARALLEL CAP",
+              "meta": "max two at once, never nine.",
+              "val": "QUEUE"
+            }
+          ]
+        },
+        {
+          "kind": "note",
+          "text": "no gate asks a question. that is the whole point."
+        }
+      ]
+    },
+    {
+      "type": "dashboard",
+      "name": "03-paper-grid",
+      "variant": [
+        "paper",
+        "ed",
+        "ed-grid"
+      ],
+      "crumb": "the gate stack / hard stops first",
+      "headline": "IT WILL GO WRONG.\nTHESE FOUR DECIDE\nHOW BADLY.",
+      "margin": "Gate one costs nothing and takes a minute. <em>Build it before you leave the room.</em>",
+      "foot": "two more",
+      "blocks": [
+        {
+          "kind": "stats",
+          "cols": 2,
+          "items": [
+            {
+              "k": "01",
+              "v": "KILL-SWITCH",
+              "s": "One file on disk. Every loop reads it first."
+            },
+            {
+              "k": "02",
+              "v": "DENY-FLOOR",
+              "s": "No read access to .env, .ssh or keys. Ever."
+            },
+            {
+              "k": "03",
+              "v": "DAILY CAP",
+              "s": "A daily ceiling. The bad night ends itself."
+            },
+            {
+              "k": "04",
+              "v": "PARALLEL CAP",
+              "s": "Two runs at once, not twenty."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "dashboard",
+      "name": "04-console-code",
+      "surface": "korn",
+      "variant": [
+        "cn",
+        "big"
+      ],
+      "crumb": "agents / guardrails / gate 01",
+      "headline": "GATE ONE IS <em>TWO LINES</em>.",
+      "ptitle": "kill-switch · top of every agent loop",
+      "pill": "copy this",
+      "blocks": [
+        {
+          "kind": "term",
+          "text": "<i># before anything else runs</i>\n[ -f ~/.agents.disabled ] && <b>exit 0</b>\n<i># stop the whole fleet, from anywhere</i>\ntouch ~/.agents.disabled"
+        },
+        {
+          "kind": "chips",
+          "label": "gates 2-4",
+          "cols": 3,
+          "items": [
+            {
+              "t": "deny-floor",
+              "d": "read access denied"
+            },
+            {
+              "t": "day-limit",
+              "d": "ceiling per 24h"
+            },
+            {
+              "t": "parallel-limit",
+              "d": "two at once"
+            }
+          ]
+        },
+        {
+          "kind": "note",
+          "text": "the other three are numbers in one config file."
+        }
+      ],
+      "foot": "one more"
+    },
+    {
+      "type": "cover",
+      "name": "05-poster-cta",
+      "surface": "kord",
+      "variant": [
+        "pk",
+        "pk-close"
+      ],
+      "stack": [
+        "COMMENT",
+        "\"GATES\""
+      ],
+      "sub": "AND I'LL SEND THE FOUR-GATE CHECKLIST. <em>ONE PAGE, NO EMAIL.</em>",
+      "footer": [
+        "@YOURHANDLE",
+        "SAVE IT FOR YOUR NEXT BUILD"
+      ]
+    }
+  ]
+}

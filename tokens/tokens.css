@@ -1,0 +1,177 @@
+/* tokens.css — your brand, one file.
+   Change the values below; everything else in the engine reads them.
+   Fonts ship as OFL files in fonts/ (Saira, Geist Mono). Swap freely. */
+:root {
+  --brand-handle: "@yourhandle";        /* printed on paper slides; keep in sync with brand.json */
+  --brand-mark: "yb.";                  /* the small wordmark on every slide */
+  --brand-mark-accent: ".";             /* the part of the mark that takes the accent */
+}
+/* Engine tokens. Two families of surface: ink (dark, textured) and paper
+   (light, flat). Every look reads these and nothing else.
+
+   Fonts are bundled locally (fonts/) so rendering stays offline and
+   reproducible — a Google Fonts CDN would vary headless depending on the network. */
+
+/* Both faces are variable and carry a width axis (Saira wdth 50-125). The looks
+   set `font-variation-settings: 'wght' 900, 'wdth' 68` and similar — if you swap
+   the display face for one without a wdth axis, those declarations go silently
+   ignored and the posters lose their condensed setting. Pick a variable face. */
+@font-face {
+  font-family: 'Saira';
+  src: url('fonts/Saira-var.ttf') format('truetype-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'Saira';
+  src: url('fonts/Saira-Italic-var.ttf') format('truetype-variations');
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: block;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('fonts/GeistMono-var.ttf') format('truetype-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: block;
+}
+
+:root {
+  /* --- Ink surfaces (each pairs with EXACTLY ONE texture) --- */
+  --ink:            #0A0A0A;  /* default dark surface (GRAIN) */
+  --ink-cord:       #0B0B0B;  /* CORD surface base            */
+  --ink-scan:       #080808;  /* SCAN surface base            */
+  --ink-frame:      #141414;  /* gutter behind tile grids     */
+
+  /* --- Accent: two shades, never interchangeable. The screen shade is tuned
+         for contrast on ink, the print shade for contrast on paper. Swapping
+         them is the fastest way to make a slide unreadable. --- */
+  --accent:         #FF5E00;    /* ON DARK ONLY  — screen accent */
+  --accent-print:   #C4420A;    /* ON PAPER ONLY — paper accent  */
+  --accent-rgb:     255,94,0;   /* same colour as --accent, for rgba() glows and
+                                   hairlines. Keep the two in sync. */
+
+  /* --- Text --- */
+  --on-ink:       #FFFFFF;
+  --on-ink-label:   #8A8A8A;  /* mono labels on dark          */
+  /* #7C7C7C, not #6E6E6E: measured against --ink, 6E lands at 3.88:1 and every
+     line of muted meta below 24px failed WCAG AA. 78 got to 4.48:1 and still
+     missed, because the diagram look rules a faint grid under it. 7C is the
+     lightest value that still reads a step dimmer than --on-ink-label and
+     clears 4.5:1 with the grid underneath. Measured, not picked. */
+  --on-ink-mute:    #7C7C7C;
+  --paper:          #FFFFFF;
+  --fg-1:           #0A0A0A;
+  --fg-2:           #4A4A4A;
+  --fg-3:           #7A7572;
+  --hairline:       #E5E5E5;
+  --hairline-dark:  rgba(255,255,255,.18);
+
+  /* --- Type --- */
+  --font-display:   'Saira', system-ui, sans-serif;     /* 900 / italic 800 */
+  --font-mono:      'Geist Mono', ui-monospace, monospace;
+
+  --display-lead:      0.82;    /* cascade stacks           */
+  --display-lead-band: 0.98;    /* endless-band lines       */
+  --display-track:     -0.048em;
+  --slant:             -9deg;   /* skewX for italic display */
+
+  --micro-size:     10px;
+  --label-track:    0.18em;
+
+  /* --- Glow (dark only, Display >= 48px only, NEVER on Mono) --- */
+  --glow-white:     0 0 52px rgba(255,255,255,.50), 0 0 16px rgba(255,255,255,.30);
+  --glow-accent:    0 0 52px rgba(var(--accent-rgb),.75), 0 0 18px rgba(var(--accent-rgb),.50);
+
+  /* --- Motion --- */
+  --dur:            180ms;
+  --ease:           cubic-bezier(0.22, 1, 0.36, 1);
+  --marquee:        18s;
+}
+
+/* ---------------------------------------------------------------
+   SURFACES — Base colour on the element, textures as absolute overlays.
+   NEVER two surfaces on one element.
+   --------------------------------------------------------------- */
+
+.surface { position: relative; overflow: hidden; }
+.surface > .tex { position: absolute; inset: 0; pointer-events: none; }
+
+/* 01 CORD — manifest, cover, quote planes */
+.surface-cord               { background: var(--ink-cord); }
+.surface-cord .tex-lines { background: repeating-linear-gradient(90deg,
+                                rgba(255,255,255,.055) 0 1px, rgba(255,255,255,0) 1px 4px); }
+.surface-cord .tex-grain { background: url('assets/tex-grain.png') repeat; opacity: .60; }
+
+/* 02 GRAIN — the default for every dark plane */
+.surface-grain               { background: var(--ink); }
+.surface-grain .tex-grain { background: url('assets/tex-grain.png') repeat; opacity: 1; }
+
+/* 03 FELT — statements, hero, deck covers */
+.surface-felt                { background: var(--ink); }
+.surface-felt .tex-felt   { background: url('assets/tex-felt.png') repeat;
+                               background-size: 440px; opacity: .85; }
+.surface-felt .vignette   { background:
+                                 radial-gradient(105% 85% at 50% 48%, rgba(255,255,255,.05), rgba(0,0,0,0) 52%),
+                                 radial-gradient(130% 115% at 50% 50%, rgba(0,0,0,0) 42%, rgba(0,0,0,.78)); }
+
+/* 04 SCAN — bands, marquee, journal headers */
+.surface-scan               { background: var(--ink-scan); }
+.surface-scan .tex-scan  { background: url('assets/tex-scan.png') repeat; opacity: .80; }
+.surface-scan .tex-grain { background: url('assets/tex-grain.png') repeat; opacity: .45; }
+
+/* ---------------------------------------------------------------
+   TEXTURES AS A BACKGROUND OF THEIR OWN. The four rules above pair a
+   texture with one surface. `bg: {"kind":"texture"}` needs each tile
+   standalone, so here they are, at one class of specificity less —
+   inside a .surface-* the paired rule still wins, which is why the
+   existing decks render exactly as before.
+   --------------------------------------------------------------- */
+.tex-grain    { background: url('assets/tex-grain.png') repeat; opacity: .55; }
+.tex-felt     { background: url('assets/tex-felt.png') repeat;
+                background-size: 440px; opacity: .85; }
+.tex-scan     { background: url('assets/tex-scan.png') repeat; opacity: .70; }
+.tex-paper    { background: url('assets/tex-paper.png') repeat;
+                background-size: 512px; opacity: .55; }
+.tex-concrete { background: url('assets/tex-concrete.png') repeat;
+                background-size: 620px; opacity: .50; }
+.tex-halftone { background: url('assets/tex-halftone.png') repeat; opacity: .34; }
+
+/* --- Type primitives --- */
+.type-cascade { font-family: var(--font-display); font-weight: 900;
+              font-size: 118px; line-height: var(--display-lead);
+              letter-spacing: var(--display-track); text-transform: uppercase;
+              color: var(--accent); white-space: nowrap; }
+
+.type-slanted { font-family: var(--font-display); font-weight: 800; font-style: italic;
+              font-size: 100px; line-height: 0.94; letter-spacing: -.028em;
+              text-transform: uppercase; white-space: nowrap;
+              transform: skewX(var(--slant));
+              color: var(--on-ink); text-shadow: var(--glow-white); }
+.type-slanted em { font-style: inherit; color: var(--accent); text-shadow: var(--glow-accent); }
+
+.type-band    { font-family: var(--font-display); font-weight: 900;
+              font-size: 78px; line-height: var(--display-lead-band);
+              letter-spacing: -.038em; text-transform: uppercase;
+              color: var(--on-ink); white-space: nowrap;
+              text-shadow: 0 0 34px rgba(255,255,255,.28); }
+
+/* the proof layer — sentence case WITH a period, never caps */
+.type-micro   { font-family: var(--font-mono); font-weight: 400;
+              font-size: var(--micro-size); line-height: 1.7;
+              color: var(--accent); }
+
+.type-label   { font-family: var(--font-mono); font-weight: 500; font-size: 9.5px;
+              letter-spacing: var(--label-track); text-transform: uppercase;
+              color: var(--on-ink-label); }
+
+/* The wordmark. It runs in the display font by default. If your mark wants a
+   face of its own, add an @font-face above and name it here — this is the one
+   place in the engine where a second display family is allowed. */
+.type-mark    { font-family: var(--font-display); font-style: italic; font-weight: 500;
+              color: var(--on-ink); letter-spacing: -.02em; }
+.type-mark i  { font-style: normal; color: var(--accent); } /* the dot */
+
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }

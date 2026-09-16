@@ -1,0 +1,197 @@
+/* ============================================================================
+   DROP - design direction «FALLING STACK»
+   Loaded per deck (deck.json → "css": ["../looks/drop.css"]).
+   carousel.css / tokens.css / render.py stay untouched.
+
+   Namespace .dr: every rule hangs off it, because several direction
+   stylesheets run in the same deck and an unscoped ".slide.cover .stack"
+   would hit every cover in the carousel. render.py writes "variant": ["dr"]
+   straight into the class list.
+
+   Thesis: the headline FALLS. Each line starts further right than the one
+   above it and ends where its words end. A poster is a justified block; this
+   is the same words let go of.
+
+   The three decisions that carry the direction:
+
+   1  THE STEP IS THE SIGNATURE. Lines are indented 0 / 104 / 208px. That is
+      the one thing you see before you read anything, and it is the one thing
+      poster deliberately does not do (`margin-left: 0` on all three lines,
+      because a poster is a block).
+
+   2  RAGGED ON THE RIGHT, AND NOT BY ACCIDENT. render.py's AUTOFIT only ever
+      scales a line DOWN, and only when it does not fit. Poster exploits that
+      to justify: it sets a size so large that EVERY line has to be squeezed
+      to exactly the measure, which is what makes the block flush. Drop sets a
+      size most lines clear, so a short line stays big and a long one gets
+      pulled in. The right edge is therefore set by the words, not by the
+      grid. Same mechanism, opposite use.
+
+   3  THE ACCENT SITS ON THE STEP, NOT ON THE MONUMENT. Poster gives line 2 a
+      430px monument in the accent. Here the accent marks the middle step, at
+      the same size as its neighbours - the drama is the movement, and a
+      second dramatic device would fight it.
+
+   No glow anywhere. Above 48px the dark system allows it, but a stepped stack
+   overlaps its own haze at this leading and the steps smear into each other.
+   The same argument carousel.css already makes for the cover cascade, one
+   size class further up.
+
+   Type floor in this look: 24px.
+   ========================================================================== */
+
+
+/* ==================================================== COVER = THE FALL */
+
+/* 360px, not 250: at 250 the stack ended 350px above the promise and left a
+   hole bigger than any other white space on the slide, which stops reading as
+   air and starts reading as a mistake. The air belongs ABOVE a stack that is
+   falling, and the last step should land near the line it hands over to. */
+.slide.dr.cover .stack {
+  top: 360px;
+  left: var(--pad-x);
+  right: 56px;
+}
+
+.slide.dr.cover .stack .line {
+  font-size: 158px;                 /* most lines clear this; the long ones get pulled in */
+  line-height: .84;
+  letter-spacing: -.032em;
+  font-variation-settings: 'wght' 900, 'wdth' 88;
+  color: var(--on-ink);
+  text-shadow: none;
+}
+
+/* The staircase. Three steps of 104px: wide enough to read as a decision,
+   narrow enough that line 3 still has 640px of measure left before AUTOFIT
+   starts shrinking it into the ground. */
+.slide.dr.cover .stack .line:nth-child(1) { margin-left: 0; }
+.slide.dr.cover .stack .line:nth-child(2) { margin-left: 104px; }
+.slide.dr.cover .stack .line:nth-child(3) { margin-left: 208px; }
+
+/* The accent marks the middle step. carousel.css paints line 3 white by class
+   (`.line.white`); here line 3 is already white, so the rule below only has to
+   take the accent off it and put it on line 2. */
+.slide.dr.cover .stack .line { color: var(--on-ink); }
+.slide.dr.cover .stack .line:nth-child(2) { color: var(--accent); }
+.slide.dr.cover .stack .line.white { color: var(--on-ink); text-shadow: none; }
+
+/* The promise hangs off the LAST step, not off the left margin: the eye has
+   just travelled to the right, and sending it back to x=72 breaks the fall. */
+.slide.dr.cover .sub {
+  left: calc(var(--pad-x) + 208px);
+  bottom: 276px;
+  max-width: 690px;
+  font-size: 28px;
+  line-height: 1.4;
+  font-weight: 700;
+  font-variation-settings: 'wght' 700, 'wdth' 92;
+  letter-spacing: .004em;
+  text-transform: none;
+  color: var(--on-ink);
+}
+.slide.dr.cover .sub em { font-style: normal; color: var(--accent); }
+
+/* The footer bar stays flush left. It is the floor the stack falls onto, and a
+   floor that is also stepped would just be more staircase. 200px clears the
+   guarded wordmark baseline (132px + 40px of mark). */
+.slide.dr.cover .footer {
+  bottom: 200px;
+  padding-top: 24px;
+  font-size: 24px;
+  font-weight: 700;
+  font-variation-settings: 'wght' 700, 'wdth' 88;
+  letter-spacing: .06em;
+  color: var(--on-ink-label);
+  border-top-color: var(--hairline-dark);
+  gap: 22px;
+}
+
+.slide.dr.cover .counter { color: var(--on-ink-mute); }
+
+
+/* ============================================ CONTENT SLIDE = THE LIST FALLS
+   Base is the dashboard type, because it is the only one with a flexible
+   column. Everything that makes it look like a panel is taken out, and the
+   step from the cover comes back as the structure of the list.
+   -------------------------------------------------------------------------- */
+
+.slide.dashboard.dr .crumb {
+  font-size: 24px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--on-ink-mute);
+}
+
+/* Ragged, not justified: `pre-line` means the break sits in the deck, where
+   the sentence breathes, and no line is stretched to meet the next one. */
+.slide.dashboard.dr .headline {
+  margin-top: 26px;
+  white-space: pre-line;
+  font-size: 104px;
+  line-height: .86;
+  letter-spacing: -.03em;
+  font-variation-settings: 'wght' 900, 'wdth' 84;
+  text-shadow: none;
+}
+.slide.dashboard.dr .headline em { color: var(--accent); text-shadow: none; }
+
+/* Panel gutted: no frame, no fill, no inner padding. What is left is the step. */
+.slide.dashboard.dr .panel {
+  margin-top: 34px;
+  border: 0;
+  background: transparent;
+}
+.slide.dashboard.dr .panel .pbody { padding: 0; }
+
+/* One column, and every row starts further right than the one above it. The
+   hairline steps with the row, so the indent reads as structure rather than
+   as four rows that failed to line up. */
+.slide.dashboard.dr .stats {
+  grid-template-columns: 1fr;
+  background: transparent;
+  gap: 0;
+}
+.slide.dashboard.dr .stats .tile {
+  background: transparent;
+  border-top: 1px solid var(--hairline-dark);
+  padding: 20px 0 22px 0;
+}
+.slide.dashboard.dr .stats .tile:nth-child(2) { margin-left: 56px; }
+.slide.dashboard.dr .stats .tile:nth-child(3) { margin-left: 112px; }
+.slide.dashboard.dr .stats .tile:nth-child(4) { margin-left: 168px; }
+.slide.dashboard.dr .stats .tile:last-child { border-bottom: 1px solid var(--hairline-dark); }
+
+/* The index is a marker in the margin, not a heading: it sits on the hairline
+   and the name starts under it, so the step stays visible even when a row
+   carries no explainer. */
+.slide.dashboard.dr .stats .tile .k {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 24px;
+  letter-spacing: .08em;
+  color: var(--accent);
+}
+.slide.dashboard.dr .stats .tile .v {
+  margin-top: 10px;
+  font-size: 54px;
+  line-height: 1.0;
+  letter-spacing: -.028em;
+  font-variation-settings: 'wght' 900, 'wdth' 80;
+  color: var(--on-ink);
+}
+.slide.dashboard.dr .stats .tile .v em { color: var(--accent); }
+.slide.dashboard.dr .stats .tile .s {
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 24px;
+  line-height: 1.45;
+  color: var(--on-ink-mute);
+}
+
+.slide.dashboard.dr .foot {
+  padding-top: 20px;
+  font-size: 24px;
+  letter-spacing: .18em;
+  color: var(--on-ink-mute);
+}

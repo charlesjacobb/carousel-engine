@@ -1,0 +1,936 @@
+/* carousel.css — slide grammar for 4:5 Instagram carousels (1080×1350).
+   Builds on the dark system (tokens.css).
+
+   Canvas: 1080 × 1350 (4:5). All values are scaled up proportionally from the
+   handoff's 1080×620 reference format (factor ~1.0 in width, height free).
+
+   SAFE ZONES (hard, non-negotiable):
+   - Instagram crops 4:5 posts to 3:4 in the profile grid → the top/bottom
+     ~112px each can fall away in the grid preview. Anything meaning-bearing
+     stays inside.
+   - The UI sits over the bottom of the slide → the bottom 90px stay free of text.
+*/
+
+:root {
+  --slide-w: 1080px;
+  --slide-h: 1350px;
+  --pad-x: 72px;          /* side margin */
+  --safe-top: 112px;      /* 3:4 grid crop, top */
+  --safe-bottom: 112px;   /* 3:4 grid crop, bottom */
+  /* The ONE height for the wordmark. House rule: «the wordmark is always at
+     the same height». Before this, four directions ran with four
+     different values (112 / 132 / 150 / 150.5) — measured with lint.py, not
+     guessed. Every design direction inherits this value, none may override it;
+     the guard block at the end of the file enforces it with !important if needed. */
+  --mark-baseline: 132px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #222;
+  font-family: var(--font-display);
+  -webkit-font-smoothing: antialiased;
+}
+
+.slide {
+  width: var(--slide-w);
+  height: var(--slide-h);
+  position: relative;
+  overflow: hidden;
+  display: block;
+}
+
+/* Every slide is a surface with exactly ONE texture (dark system rule). */
+.slide > .tex, .slide > .vignette { position: absolute; inset: 0; pointer-events: none; }
+
+/* ---------- bg: photo, gradient or texture behind any slide type ----------
+   Set `"bg": {...}` on a slide and it replaces the surface. The layers below
+   sit under .layer (z-index 2), so the content always wins. */
+.slide > .bg-fill, .slide > .bg-photo, .slide > .bg-dim {
+  position: absolute; inset: 0; pointer-events: none;
+}
+/* A textured or gradient bg still needs a base fill under it: the textures are
+   alpha overlays and a gradient can carry transparency at its stops. */
+.slide.bg-texture, .slide.bg-gradient { background: var(--ink); }
+.slide.paper.bg-texture, .slide.paper.bg-gradient { background: var(--paper); }
+
+.slide > .bg-photo { background-size: cover; background-repeat: no-repeat; }
+/* Grades are deliberately small. A photo behind type is a surface, not a
+   picture — if the grade is visible as an effect it competes with the type. */
+.slide > .bg-photo.grade-cool { filter: saturate(.82) hue-rotate(-12deg) brightness(.94); }
+.slide > .bg-photo.grade-warm { filter: saturate(1.06) hue-rotate(10deg) brightness(1.02); }
+
+/* The scrim is a flat plane in the slide's own base colour, not a gradient:
+   a gradient makes the contrast depend on where a line happens to sit, and
+   then the linter can pass one deck and fail the next with the same `dim`. */
+.slide > .bg-dim.scrim-ink   { background: var(--ink); }
+.slide > .bg-dim.scrim-paper { background: var(--paper); }
+
+/* Content sits above the textures */
+.layer { position: absolute; inset: 0; z-index: 2; }
+
+/* ---------- shared building blocks ---------- */
+
+/* The wordmark — always present, never large */
+.mark {
+  position: absolute;
+  font-family: var(--font-display);  /* your display font, italic */
+  font-style: italic;
+  font-weight: 500;
+  font-size: 34px;
+  letter-spacing: -.02em;
+  color: var(--on-ink);
+}
+.mark i { font-style: normal; color: var(--accent); }
+.slide.paper .mark { color: var(--fg-1); }
+.slide.paper .mark i { color: var(--accent-print); }
+
+/* Slide counter: mono, small, muted */
+.counter {
+  position: absolute;
+  top: var(--safe-top);
+  right: var(--pad-x);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 24px;
+  letter-spacing: var(--label-track);
+  color: var(--on-ink-label);
+}
+.slide.paper .counter { color: var(--fg-3); }
+
+/* Label line (category / source) */
+.label {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 22px;
+  letter-spacing: var(--label-track);
+  text-transform: uppercase;
+  color: var(--on-ink-label);
+}
+
+/* The proof layer: accent, mono, sentence case WITH a period. This is the
+   information density of the carousel — big statement on top, red evidence below. */
+.micro {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  /* 24px, not 22: 24 is where WCAG stops asking for 4.5:1 and asks for 3:1.
+     At 22px the evidence layer was the one line that kept failing CONTRAST
+     over a photo, and it reads better on a phone anyway. */
+  font-size: 24px;
+  line-height: 1.7;
+  color: var(--accent);
+}
+.slide.paper .micro { color: var(--accent-print); }
+
+/* Display headline. Glow only from 48px up (dark system rule). */
+.display {
+  font-family: var(--font-display);
+  font-weight: 900;
+  text-transform: uppercase;
+  color: var(--on-ink);
+  letter-spacing: -.038em;
+  text-shadow: var(--glow-white);
+}
+.display em { font-style: normal; color: var(--accent); text-shadow: var(--glow-accent); }
+
+/* ---------- 01 COVER (cascade.) — 3-line stack, deliberately misaligned ---------- */
+.slide.cover .stack {
+  position: absolute;
+  top: 300px;
+  left: var(--pad-x);
+  right: 40px;
+}
+.slide.cover .stack .line {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 132px;                    /* Starting value — render.py scales to width */
+  line-height: var(--display-lead);
+  letter-spacing: var(--display-track);
+  text-transform: uppercase;
+  color: var(--accent);
+  /* Muted glow: at 0.82 leading, the haze of the stacked lines overlaps
+     and the stack smears. Full glow stays reserved for single lines. */
+  text-shadow: 0 0 30px rgba(var(--accent-rgb),.55), 0 0 12px rgba(var(--accent-rgb),.40);
+  white-space: nowrap;
+  transform-origin: left center;
+}
+/* The 12/56/0 offset is deliberate — the stack aligns to the logo lockup */
+.slide.cover .stack .line:nth-child(1) { margin-left: 12px; }
+.slide.cover .stack .line:nth-child(2) { margin-left: 56px; }
+.slide.cover .stack .line:nth-child(3) { margin-left: 0; }
+.slide.cover .stack .line.white {
+  color: var(--on-ink);
+  text-shadow: 0 0 30px rgba(255,255,255,.38), 0 0 12px rgba(255,255,255,.22);
+}
+
+.slide.cover .sub {
+  position: absolute;
+  left: var(--pad-x);
+  right: var(--pad-x);
+  bottom: 300px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.45;
+  text-transform: uppercase;
+  color: var(--on-ink);
+  max-width: 720px;
+}
+/* 200px, not 150: the guard block below pins every wordmark to
+   --mark-baseline (132px) and the mark is 40px tall, so a footer at 150px sat
+   straight on top of it. The poster look never showed it because it moves the
+   footer itself; the bare cover did. */
+.slide.cover .footer {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: 200px;
+  border-top: 1px solid var(--hairline-dark);
+  padding: 26px var(--pad-x) 0;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 24px;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  color: var(--on-ink);
+}
+.slide.cover .mark { left: var(--pad-x); top: var(--safe-top); }
+
+/* ---------- 02 STAKE — the slide that decides reach ----------
+   Instagram serves carousels a second time on no-swipe — with slide 2.
+   So: a standalone hook, not just a continuation. */
+.slide.stake .body {
+  position: absolute;
+  left: var(--pad-x);
+  right: var(--pad-x);
+  top: 50%;
+  transform: translateY(-50%);
+}
+.slide.stake .body .headline {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 88px;
+  line-height: .98;
+  letter-spacing: -.038em;
+  text-transform: uppercase;
+  color: var(--on-ink);
+  text-shadow: var(--glow-white);
+}
+.slide.stake .body .headline em {
+  font-style: normal; color: var(--accent); text-shadow: var(--glow-accent);
+}
+.slide.stake .body .micro { margin-top: 44px; max-width: 820px; }
+.slide.stake .mark { left: var(--pad-x); bottom: var(--safe-bottom); }
+
+/* ---------- 03..n INSIGHT — the workhorse slide, high info density ---------- */
+.slide.insight .head {
+  position: absolute;
+  top: 210px;
+  left: var(--pad-x);
+  right: var(--pad-x);
+}
+.slide.insight .kicker {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 24px;
+  letter-spacing: var(--label-track);
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 28px;
+}
+.slide.insight .headline {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 72px;
+  line-height: 1.0;
+  letter-spacing: -.038em;
+  text-transform: uppercase;
+  color: var(--on-ink);
+  text-shadow: var(--glow-white);
+}
+.slide.insight .headline em {
+  font-style: normal; color: var(--accent); text-shadow: var(--glow-accent);
+}
+.slide.insight .evidence {
+  position: absolute;
+  left: var(--pad-x);
+  right: var(--pad-x);
+  bottom: 300px;
+}
+.slide.insight .evidence .rule {
+  height: 1px; background: var(--hairline-dark); margin-bottom: 34px;
+}
+.slide.insight .evidence .micro { max-width: 880px; }
+/* Terminal/code block as evidence */
+.slide.insight .term {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1.75;
+  color: var(--on-ink);
+  border: 1px solid var(--hairline-dark);
+  padding: 26px 30px;
+  margin-top: 30px;
+  white-space: pre-wrap;
+}
+.slide.insight .term b { font-weight: 400; color: var(--accent); }
+.slide.insight .mark { left: var(--pad-x); bottom: var(--safe-bottom); }
+
+/* ---------- PROOF — on paper. «The proof belongs in the light.» ----------
+   Also breaks up the black block: exactly one light tile per six. */
+.slide.paper { background: var(--paper); }
+.slide.paper .head {
+  position: absolute; top: 210px; left: var(--pad-x); right: var(--pad-x);
+}
+.slide.paper .kicker {
+  font-family: var(--font-mono); font-weight: 500; font-size: 24px;
+  letter-spacing: var(--label-track); text-transform: uppercase;
+  color: var(--accent-print); margin-bottom: 28px;
+}
+.slide.paper .headline {
+  font-family: var(--font-display); font-weight: 900; font-size: 72px;
+  line-height: 1.0; letter-spacing: -.038em; text-transform: uppercase;
+  color: var(--fg-1); text-shadow: none;   /* no glow on paper */
+}
+.slide.paper .headline em { font-style: normal; color: var(--accent-print); }
+.slide.paper .evidence { position: absolute; left: var(--pad-x); right: var(--pad-x); bottom: 300px; }
+.slide.paper .evidence .rule { height: 1px; background: var(--hairline); margin-bottom: 34px; }
+.slide.paper .term {
+  font-family: var(--font-mono); font-size: 22px; line-height: 1.75;
+  color: var(--fg-2); border: 1px solid var(--hairline);
+  padding: 26px 30px; margin-top: 30px; white-space: pre-wrap;
+}
+.slide.paper .term b { font-weight: 400; color: var(--accent-print); }
+.slide.paper .counter { color: var(--fg-3); }
+.slide.paper .label { color: var(--fg-3); }
+.slide.paper .mark { left: var(--pad-x); bottom: var(--safe-bottom); }
+
+/* ---------- PHOTO SLIDE — generated B/W image as surface ---------- */
+.slide.photo .shot {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+  /* NO grayscale: the red light accent IS the brand share in the image
+     (60 black · 30 red · 10 white). Desaturating would wipe out exactly that. */
+  filter: contrast(1.08) saturate(.95);
+}
+.slide.photo .scrim {
+  position: absolute; inset: 0;
+  /* Only as much darkening as the type needs — the shot has to stay
+     legible, otherwise the slide is just a black rectangle with text. */
+  background: linear-gradient(180deg,
+    rgba(10,10,10,.28) 0%,
+    rgba(10,10,10,0) 30%,
+    rgba(10,10,10,0) 46%,
+    rgba(10,10,10,.72) 72%,
+    rgba(10,10,10,.92) 100%);
+}
+.slide.photo .headline {
+  position: absolute; left: var(--pad-x); right: var(--pad-x); bottom: 340px;
+  font-family: var(--font-display); font-weight: 900; font-size: 76px;
+  line-height: .98; letter-spacing: -.038em; text-transform: uppercase;
+  color: var(--on-ink); text-shadow: var(--glow-white);
+}
+.slide.photo .headline em { font-style: normal; color: var(--accent); text-shadow: var(--glow-accent); }
+.slide.photo .micro { position: absolute; left: var(--pad-x); right: var(--pad-x); bottom: 250px; }
+.slide.photo .mark { left: var(--pad-x); bottom: var(--safe-bottom); }
+
+/* ---------- CTA (fine print.) — statement + real micro data ----------
+   8 fixed slots, empty ones stay empty, ONLY real data. The mechanic breaks
+   down the moment the fine print is made up. */
+.slide.cta .center {
+  position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
+  text-align: center; padding: 0 var(--pad-x);
+}
+.slide.cta .center .headline {
+  font-family: var(--font-display); font-weight: 900; font-size: 76px;
+  line-height: 1.02; letter-spacing: -.03em; text-transform: uppercase;
+  color: var(--on-ink); text-shadow: var(--glow-white);
+}
+.slide.cta .center .headline em {
+  font-style: normal; color: var(--accent); text-shadow: var(--glow-accent);
+}
+.slide.cta .center .actions { margin-top: 52px; }
+.slide.cta .center .actions .micro { font-size: 22px; }
+
+.slide.cta .slot { position: absolute; font-family: var(--font-mono);
+                   font-size: 24px; line-height: 1.7; color: var(--accent); }
+.slide.cta .slot.tl { top: var(--safe-top); left: var(--pad-x); text-align: left; }
+.slide.cta .slot.tr { top: var(--safe-top); right: var(--pad-x); text-align: right; }
+.slide.cta .slot.tc { top: var(--safe-top); left: 0; right: 0; text-align: center; }
+.slide.cta .slot.bl { bottom: 180px; left: var(--pad-x); text-align: left; }
+.slide.cta .slot.br { bottom: 180px; right: var(--pad-x); text-align: right; }
+.slide.cta .mark { left: 0; right: 0; bottom: var(--safe-bottom); text-align: center; font-size: 34px; }
+
+/* Crosses — the system's recurring mark */
+.cross { position: absolute; width: 20px; height: 20px; }
+.cross::before, .cross::after {
+  content: ''; position: absolute; background: var(--hairline-dark);
+}
+.cross::before { left: 0; right: 0; top: 50%; height: 1px; }
+.cross::after { top: 0; bottom: 0; left: 50%; width: 1px; }
+.slide.paper .cross::before, .slide.paper .cross::after { background: var(--hairline); }
+
+/* ================================================================
+   DASHBOARD — the product UI slide.
+   A slide that looks like a screenshot from real software: breadcrumb,
+   headline, panel with data.
+
+   Two deliberate deviations from the reference:
+   - Accent stays signal red instead of green. The system has two reds and
+     declares them non-interchangeable; a third accent green would be a
+     break. Side effect: sets us apart from the original.
+   - No fake evidence. The data in a panel is demo data for a product,
+     never a claim about real numbers of our own.
+
+   Layout is a FLEX COLUMN, not absolutely positioned like the other
+   types. Reason: the panel content is data-driven and varies in
+   height — with fixed pixel anchors it would run out of frame
+   depending on line count. The column distributes the rest.
+   ================================================================ */
+
+.slide.dashboard .wrap {
+  position: absolute;
+  top: var(--safe-top);
+  left: var(--pad-x);
+  right: var(--pad-x);
+  bottom: 150px;                 /* room for the mark + IG UI */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Breadcrumb — uses the existing .label spec, just positioned.
+   The slash turns red: a single signal, not a color field. */
+.slide.dashboard .crumb {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 24px;
+  letter-spacing: var(--label-track);
+  text-transform: lowercase;
+  color: var(--on-ink-label);
+  flex: 0 0 auto;
+}
+.slide.dashboard .crumb i { font-style: normal; color: var(--accent); }
+
+/* NO glow on dashboard headlines. The dark system mandates glow from 48px
+   up — but on a UI slide that's exactly the effect that softens the edges
+   and makes the whole slide read as "low resolution". Both references
+   set type hard and crisp-edged. Glow stays reserved for the poster
+   slides (cover, stake, insight), where it works as a lighting mood. */
+.slide.dashboard .headline {
+  margin-top: 50px;
+  flex: 0 0 auto;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 88px;
+  line-height: .93;
+  letter-spacing: -.042em;
+  text-transform: uppercase;
+  color: var(--on-ink);
+  text-shadow: none;
+}
+.slide.dashboard .headline em {
+  font-style: normal; color: var(--accent); text-shadow: none;
+}
+
+/* MONO variant — headline in the mono face instead of the display face. Closer to
+   the reference, but breaks the rule «display for headlines, mono for evidence».
+   Deliberately its own class, so the break stays visible and doesn't
+   accidentally become the default. No glow: never on mono (system rule). */
+.slide.dashboard.mono .headline {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 62px;
+  line-height: 1.04;
+  letter-spacing: -.03em;
+  text-shadow: none;
+}
+.slide.dashboard.mono .headline em { text-shadow: none; }
+
+/* COND variant — pushes the display face's wdth axis to its limit (Saira: 50–125).
+   Condensed means: more characters per line at the same height. */
+.slide.dashboard.cond .headline {
+  font-variation-settings: 'wdth' 68;
+  font-size: 104px;
+  letter-spacing: -.02em;
+}
+
+.slide.dashboard .sub {
+  margin-top: 26px;
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1.45;
+  color: var(--on-ink-label);
+  max-width: 900px;
+}
+
+/* ---------- PANEL — the recreated software cutout ---------- */
+/* The panel wraps its content and sits right under the sub; the
+   rest of the column falls through as empty space at the BOTTOM (the
+   footer picks it up via margin-top:auto).
+   Two discarded variants, so nobody builds them back in:
+   `margin-top:auto` left a dead hole between sub and panel — the slide
+   looked like a render bug. `flex:1` inflated the panel to full height
+   when there was little content, leaving a single terminal block floating
+   in 700px of emptiness. Content on top, air at the bottom is the calmer
+   solution in both cases. */
+.slide.dashboard .panel {
+  margin-top: 40px;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--hairline-dark);
+  background: rgba(255,255,255,.025);
+}
+.slide.dashboard .panel .phead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--hairline-dark);
+  font-family: var(--font-mono);
+  font-size: 23px;
+  letter-spacing: var(--label-track);
+  text-transform: lowercase;
+  color: var(--on-ink-mute);
+}
+/* Regions stack from the TOP, not centered: a program window fills
+   from top to bottom. `space-between` distributes the rest across the
+   gaps instead of leaving a hole at the bottom. */
+/* Regions stack flush from the top with equal spacing. `space-between`
+   distributed the rest across the gaps and tore open a hole between two
+   areas — in a program window, zones sit tight and the empty space sits
+   at the bottom. */
+.slide.dashboard .panel .pbody {
+  padding: 24px;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-height: 0;
+}
+/* A block with "grow": true swallows the rest of the panel height. In a real
+   program, the data zone (list, chart) stretches, not the header —
+   without this, the empty space pools at the bottom and the slide looks unfinished. */
+.slide.dashboard .pbody > .grow { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.slide.dashboard .pbody > .grow > .bars,
+.slide.dashboard .pbody > .grow > .logs { flex: 1 1 auto; }
+.slide.dashboard .pbody > .grow > .bars { height: auto; }
+.slide.dashboard .pbody > .stats .tile {
+  display: flex; flex-direction: column; justify-content: center;
+}
+
+/* Status pill. The dot is the only filled color element in the system —
+   small enough that the «red only as type» rule doesn't tip over. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--hairline-dark);
+  border-radius: 999px;
+  padding: 9px 18px;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  letter-spacing: .06em;
+  text-transform: lowercase;
+  color: var(--on-ink);
+}
+.pill::before {
+  content: ''; width: 11px; height: 11px; border-radius: 50%;
+  background: var(--on-ink);
+}
+.pill.alert { color: var(--accent); }
+.pill.alert::before { background: var(--accent); }
+
+/* ---------- STAT TILES — big number, small label ---------- */
+.stats { display: grid; grid-template-columns: repeat(var(--cols, 2), 1fr); gap: 1px;
+         background: var(--hairline-dark); }
+.stats .tile { background: var(--ink); padding: 26px 24px; }
+.stats .tile .k {
+  font-family: var(--font-mono); font-size: 22px;
+  letter-spacing: var(--label-track); text-transform: uppercase;
+  color: var(--on-ink-label);
+}
+.stats .tile .v {
+  margin-top: 14px;
+  font-family: var(--font-display); font-weight: 900;
+  font-size: 78px; line-height: 1; letter-spacing: -.04em;
+  color: var(--on-ink);
+}
+.stats .tile .v em { font-style: normal; color: var(--accent); }
+.stats .tile .s {
+  margin-top: 8px;
+  font-family: var(--font-mono); font-size: 24px; color: var(--on-ink-mute);
+}
+
+/* ---------- ROWS — table with status dot ---------- */
+.rows { font-family: var(--font-mono); font-size: 27px; }
+.rows .row {
+  display: flex; align-items: center; gap: 16px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--hairline-dark);
+  color: var(--on-ink);
+}
+.rows .row:last-child { border-bottom: 0; }
+.rows .row .dot { width: 8px; height: 8px; flex: 0 0 8px; background: var(--on-ink-mute); }
+.rows .row .dot.ok    { background: var(--on-ink); }
+.rows .row .dot.alert { background: var(--accent); }
+.rows .row .lb   { flex: 0 0 auto; letter-spacing: .04em; }
+.rows .row .meta { flex: 1 1 auto; color: var(--on-ink-mute); overflow: hidden;
+                   text-overflow: ellipsis; white-space: nowrap; }
+.rows .row .val  { flex: 0 0 auto; color: var(--accent); }
+
+/* ---------- BARS — plain divs, height comes from the deck data ----------
+   No SVG, no chart library: the output is a still image, so
+   percentage height is enough. The last bar is bright = "now". */
+.bars { display: flex; align-items: flex-end; gap: 8px; height: 150px; }
+.bars .bar { flex: 1 1 0; background: var(--hairline-dark); min-height: 3px; }
+.bars .bar.hot { background: var(--accent); }
+.bars .bar.now { background: var(--on-ink); }
+
+/* ---------- CLUSTER — dot cloud, bright by share ----------
+   For funnel/ratio displays: n dots, k of them active. */
+/* Width capped: across the full panel width, 48 dots form a single
+   row and read as a decorative line. As a wrapping block, the ratio
+   reads at a glance — that's exactly what this piece is for. */
+.cluster { display: flex; flex-wrap: wrap; gap: 7px; max-width: 430px; }
+.cluster .pt { width: 9px; height: 9px; border-radius: 50%;
+               background: var(--hairline-dark); }
+.cluster .pt.on  { background: var(--on-ink); }
+.cluster .pt.hot { background: var(--accent); }
+
+/* Terminal block inside the panel — inherits the proven .term look from
+   insight, plus a red prompt character. */
+.slide.dashboard .term {
+  font-family: var(--font-mono); font-weight: 400;
+  font-size: 27px; line-height: 1.7;
+  color: var(--on-ink);
+  border: 1px solid var(--hairline-dark);
+  padding: 26px 30px;
+  white-space: pre-wrap;
+}
+.slide.dashboard .term b { font-weight: 400; color: var(--accent); }
+.slide.dashboard .term i { font-style: normal; color: var(--on-ink-mute); }
+
+/* ---------- REGION — named subsection inside the panel ----------
+   A convincing panel isn't ONE box, it is several labelled zones stacked on
+   top of each other. That is exactly what creates the screenshot feel: a
+   program has areas, a slide has a box. */
+.region > .rlabel {
+  font-family: var(--font-mono); font-size: 22px;
+  letter-spacing: var(--label-track); text-transform: uppercase;
+  color: var(--on-ink-mute); margin-bottom: 12px;
+}
+
+/* ---------- CHIPS — channels/connections as status fields ---------- */
+.chips { display: grid; grid-template-columns: repeat(var(--n, 4), 1fr); gap: 10px; }
+.chips .chip {
+  border: 1px solid var(--hairline-dark); padding: 13px 15px;
+  font-family: var(--font-mono);
+}
+.chips .chip .t {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 26px; color: var(--on-ink); letter-spacing: .02em;
+}
+.chips .chip .t::before {
+  content: ''; width: 6px; height: 6px; flex: 0 0 6px;
+  background: var(--on-ink);
+}
+.chips .chip.hot .t::before { background: var(--accent); }
+.chips .chip .d { margin-top: 10px; font-size: 22px; color: var(--on-ink-mute); }
+
+/* ---------- LOGS — message/event rows with badge ----------
+   The densest zone. Channel tag, sender, preview, time, counter. */
+.logs { font-family: var(--font-mono); font-size: 26px; }
+.logs .lg {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 0; border-bottom: 1px solid var(--hairline-dark);
+}
+.logs .lg:last-child { border-bottom: 0; }
+.logs .lg .sq { width: 7px; height: 7px; flex: 0 0 7px; background: var(--on-ink-mute); }
+.logs .lg .sq.hot { background: var(--accent); }
+.logs .lg .sq.on  { background: var(--on-ink); }
+.logs .lg .tag {
+  flex: 0 0 auto; min-width: 100px; font-size: 22px;
+  letter-spacing: var(--label-track); text-transform: uppercase;
+  color: var(--on-ink-mute);
+}
+.logs .lg .who { flex: 0 0 auto; color: var(--on-ink); }
+.logs .lg .txt {
+  flex: 1 1 auto; color: var(--on-ink-mute);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.logs .lg .ago { flex: 0 0 auto; font-size: 23px; color: var(--on-ink-mute); }
+.logs .lg .badge {
+  flex: 0 0 auto; min-width: 26px; text-align: center;
+  border: 1px solid var(--hairline-dark); padding: 4px 12px;
+  font-size: 22px; color: var(--on-ink);
+}
+
+/* ---------- ACTS — rows with an action button ---------- */
+.acts { font-family: var(--font-mono); font-size: 27px; }
+.acts .act {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 0; border-bottom: 1px solid var(--hairline-dark);
+}
+.acts .act:last-child { border-bottom: 0; }
+.acts .act .sq { width: 7px; height: 7px; flex: 0 0 7px; background: var(--on-ink); }
+.acts .act .nm { flex: 0 0 auto; color: var(--on-ink); }
+.acts .act .st { flex: 1 1 auto; color: var(--on-ink-mute); font-size: 23px; }
+.acts .act .btn {
+  flex: 0 0 auto; border: 1px solid var(--hairline-dark);
+  padding: 8px 18px; font-size: 22px; color: var(--on-ink);
+  letter-spacing: .06em;
+}
+
+/* ---------- FUNNEL — stages side by side, a dot cloud under each ---------- */
+.funnel { display: grid; grid-template-columns: repeat(var(--n, 5), 1fr); gap: 14px; }
+.funnel .stg .sl {
+  font-family: var(--font-mono); font-size: 22px;
+  letter-spacing: var(--label-track); text-transform: uppercase;
+  color: var(--on-ink-mute);
+}
+.funnel .stg .sv {
+  margin-top: 8px; font-family: var(--font-display); font-weight: 900;
+  font-size: 52px; line-height: 1; letter-spacing: -.03em; color: var(--on-ink);
+}
+/* min-height reserves the percentage line EVEN when it's missing — otherwise
+   the first stage's dot cloud shifts up and the row sits crooked. */
+.funnel .stg .sp {
+  margin-top: 7px; min-height: 30px;
+  font-family: var(--font-mono); font-size: 22px;
+  color: var(--accent);
+}
+.funnel .stg .cluster { margin-top: 14px; max-width: 100%; gap: 5px; }
+.funnel .stg .cluster .pt { width: 6px; height: 6px; }
+
+/* ---------- LEGEND — the footer line of a chart ---------- */
+.legend {
+  display: flex; flex-wrap: wrap; gap: 20px;
+  font-family: var(--font-mono); font-size: 23px; color: var(--on-ink-mute);
+}
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend span::before {
+  content: ''; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--on-ink-mute);
+}
+.legend span.on::before  { background: var(--on-ink); }
+.legend span.hot::before { background: var(--accent); }
+
+/* Note line at the foot of the panel — one quiet line under the data */
+.pnote {
+  border-top: 1px dashed var(--hairline-dark); padding-top: 14px;
+  font-family: var(--font-mono); font-size: 23px; line-height: 1.5; color: var(--on-ink-mute);
+}
+
+/* Spacing between multiple building blocks in the same panel */
+.slide.dashboard .pbody > * + * { margin-top: 22px; }
+
+/* `auto` + padding: on slides WITH a panel, 26px of spacing remains (the
+   panel has already used up the space); on slides WITHOUT a panel, the line
+   slides down to the bottom edge instead of sticking to the text above. */
+.slide.dashboard .foot {
+  margin-top: auto;
+  padding-top: 26px;
+  flex: 0 0 auto;
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: var(--font-mono); font-size: 22px;
+  letter-spacing: var(--label-track); text-transform: uppercase;
+  color: var(--on-ink-mute);
+}
+.slide.dashboard .mark { position: static; font-size: 40px; text-transform: none; }
+
+/* ================================================================
+   POSTER — the cover variant of the dashboard.
+   Both references make slide 1 a poster, not a UI: type fills half
+   the frame, a promise in parentheses below it, a number strip at the
+   bottom. The dashboard panel only shows up from slide 2 on.
+   ================================================================ */
+.slide.dashboard.poster .headline {
+  margin-top: 44px;
+  font-size: 138px;
+  line-height: .86;
+  letter-spacing: -.05em;
+  font-variation-settings: 'wdth' 84;
+}
+
+/* The promise in parentheses — the «(free)» aside that turns a headline into
+   an offer. Set in the display italic rather than in a handwriting face: a
+   script font reads as a sticker, an italic reads as an aside. */
+.slide.dashboard .paren {
+  margin-top: 30px;
+  flex: 0 0 auto;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 800;
+  font-size: 52px;
+  line-height: 1.15;
+  letter-spacing: -.01em;
+  color: var(--on-ink);
+}
+.slide.dashboard .paren em { font-style: italic; color: var(--accent); }
+.slide.dashboard.paper .paren { color: var(--fg-1); }
+.slide.dashboard.paper .paren em { color: var(--accent-print); }
+
+/* Number strip at the foot of the poster — three values, no box around them. */
+.slide.dashboard .strip {
+  margin-top: auto;
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(var(--n, 3), 1fr);
+  gap: 28px;
+  border-top: 1px solid var(--hairline-dark);
+  padding-top: 26px;
+}
+.slide.dashboard .strip .it .v {
+  font-family: var(--font-display); font-weight: 900;
+  font-size: 66px; line-height: 1; letter-spacing: -.045em;
+  color: var(--on-ink);
+}
+.slide.dashboard .strip .it .v em { font-style: normal; color: var(--accent); }
+.slide.dashboard .strip .it .k {
+  margin-top: 12px; font-family: var(--font-mono); font-size: 22px;
+  letter-spacing: var(--label-track); text-transform: uppercase;
+  color: var(--on-ink-mute);
+}
+.slide.dashboard.paper .strip { border-top-color: var(--hairline); }
+.slide.dashboard.paper .strip .it .v { color: var(--fg-1); }
+.slide.dashboard.paper .strip .it .v em { color: var(--accent-print); }
+.slide.dashboard.paper .strip .it .k { color: var(--fg-3); }
+
+/* ---------- Paper variant of the dashboard ---------- */
+.slide.dashboard.paper .headline { color: var(--fg-1); text-shadow: none; }
+.slide.dashboard.paper .headline em { color: var(--accent-print); text-shadow: none; }
+.slide.dashboard.paper .crumb,
+.slide.dashboard.paper .sub,
+.slide.dashboard.paper .foot { color: var(--fg-3); }
+.slide.dashboard.paper .crumb i { color: var(--accent-print); }
+.slide.dashboard.paper .panel { border-color: var(--hairline); background: transparent; }
+.slide.dashboard.paper .panel .phead { border-bottom-color: var(--hairline); color: var(--fg-3); }
+.slide.dashboard.paper .stats { background: var(--hairline); }
+.slide.dashboard.paper .stats .tile { background: var(--paper); }
+.slide.dashboard.paper .stats .tile .k { color: var(--fg-3); }
+.slide.dashboard.paper .stats .tile .v { color: var(--fg-1); }
+.slide.dashboard.paper .stats .tile .v em { color: var(--accent-print); }
+.slide.dashboard.paper .stats .tile .s { color: var(--fg-3); }
+.slide.dashboard.paper .rows .row { color: var(--fg-1); border-bottom-color: var(--hairline); }
+.slide.dashboard.paper .rows .row .dot { background: var(--fg-3); }
+.slide.dashboard.paper .rows .row .dot.ok { background: var(--fg-1); }
+.slide.dashboard.paper .rows .row .dot.alert { background: var(--accent-print); }
+.slide.dashboard.paper .rows .row .meta { color: var(--fg-3); }
+.slide.dashboard.paper .rows .row .val { color: var(--accent-print); }
+.slide.dashboard.paper .bars .bar { background: var(--hairline); }
+.slide.dashboard.paper .bars .bar.hot { background: var(--accent-print); }
+.slide.dashboard.paper .bars .bar.now { background: var(--fg-1); }
+.slide.dashboard.paper .cluster .pt { background: var(--hairline); }
+.slide.dashboard.paper .cluster .pt.on { background: var(--fg-1); }
+.slide.dashboard.paper .cluster .pt.hot { background: var(--accent-print); }
+.slide.dashboard.paper .pill { color: var(--fg-1); border-color: var(--hairline); }
+.slide.dashboard.paper .pill::before { background: var(--fg-1); }
+.slide.dashboard.paper .pill.alert { color: var(--accent-print); }
+.slide.dashboard.paper .pill.alert::before { background: var(--accent-print); }
+.slide.dashboard.paper .term { color: var(--fg-2); border-color: var(--hairline); }
+.slide.dashboard.paper .term b { color: var(--accent-print); }
+.slide.dashboard.paper .term i { color: var(--fg-3); }
+
+/* ---------- Photo cover: cascade over the image (the scroll-stopper) ---------- */
+.slide.photo .stack {
+  position: absolute;
+  left: var(--pad-x);
+  right: 40px;
+  bottom: 300px;
+}
+.slide.photo .stack .line {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 104px;
+  line-height: var(--display-lead);
+  letter-spacing: var(--display-track);
+  text-transform: uppercase;
+  color: var(--on-ink);
+  text-shadow: 0 0 30px rgba(0,0,0,.85), 0 0 90px rgba(0,0,0,.7);
+  white-space: nowrap;
+  transform-origin: left center;
+}
+.slide.photo .stack .line.white { color: var(--accent);
+  text-shadow: 0 0 26px rgba(var(--accent-rgb),.5), 0 0 12px rgba(0,0,0,.9); }
+/* Scrim for the photo cover is stronger — the cascade has to sit on any shot */
+.slide.photo .stack ~ .micro { bottom: 210px; }
+
+/* ---------- type on a background that is not flat ink ----------------------
+   Placed here, after every slide type has had its say, because
+   `.slide.cover .stack .line` carries the same specificity and would
+   otherwise win on document order alone.
+
+   Accent type does not survive on a photo. Measured: the accent sits at a
+   relative luminance around 0.29 and a photo has patches on both sides of
+   that, so the cascade loses contrast somewhere no matter how it is placed.
+   On a photo the display type goes white and the accent goes back to being a
+   signal in the evidence layer. lint.py's CONTRAST rule is what found this. */
+.slide.has-bg-photo .stack .line {
+  color: var(--on-ink);
+  text-shadow: 0 0 30px rgba(0,0,0,.55), 0 2px 10px rgba(0,0,0,.45);
+}
+.slide.paper.has-bg-photo .stack .line {
+  color: var(--fg-1);
+  text-shadow: 0 0 30px rgba(255,255,255,.55);
+}
+
+/* Same problem, other cause: a background that carries the accent itself, or
+   simply a lot of light. `"variant": "on-accent"` hands the whole evidence
+   layer to white and leaves the colour to the background. */
+.slide.on-accent .micro,
+.slide.on-accent .kicker,
+.slide.on-accent .counter,
+.slide.on-accent .slot,
+.slide.on-accent .mark i { color: var(--on-ink); }
+.slide.on-accent .headline em,
+.slide.on-accent .display em { color: var(--on-ink); text-shadow: var(--glow-white); }
+.slide.on-accent .term { color: var(--on-ink); border-color: rgba(255,255,255,.38); }
+
+/* ================================================================
+   GUARD — brand invariants that no design direction may break.
+   Deliberately placed at the end of the file and enforced with !important:
+   four parallel look.css files otherwise pulled the wordmark to four
+   different heights (112 / 132 / 150 / 150.5 px, measured with lint.py).
+   A mark is not a layout decision, it's a constant.
+   ================================================================ */
+
+/* 1 — The wordmark: ONE position, absolute, on every slide type.
+       Not in the flex flow of the footer, because there the line
+       height and baseline alignment of its neighbors would affect its own. */
+.slide .mark {
+  position: absolute !important;
+  left: var(--pad-x) !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: var(--mark-baseline) !important;
+  line-height: 1 !important;
+  font-size: 40px !important;
+  text-align: left !important;
+  text-transform: none !important;   /* .foot would otherwise inherit uppercase → «YB.» */
+  font-family: var(--font-display) !important; font-style: italic !important;
+  font-style: italic !important;
+  font-weight: 500 !important;
+}
+
+/* 2 — The content frame ends exactly where the mark sits. That way the
+       bottom edge of the footer (the last flex child, `margin-top:auto`) lines
+       up with the bottom edge of the mark: both sit on one line, without
+       the footer having to be taken out of the flow.
+       Setting the footer to absolute was the first attempt, and a mistake -
+       take it out of the flow and nothing reserves its space anymore, so the
+       panel content runs right over it. That's exactly what happened in the
+       editorial deck, and lint.py didn't catch it, because the overflow test
+       only checked against the slide edge instead of the content frame. */
+.slide.dashboard .wrap {
+  bottom: var(--mark-baseline) !important;
+}
+
+/* 3 — The footer lost its left slot (the mark now sits absolutely over
+       it), so its text shifts to the right. */
+.slide.dashboard .foot { justify-content: flex-end; }

@@ -1,0 +1,189 @@
+{
+  "slug": "016-twice-is-a-skill",
+  "title": "TWICE = SKILL - the rule that turns prompts into a system. One file, one description, and it starts itself.",
+  "css": [
+    "../looks/poster.css",
+    "../looks/console.css",
+    "../looks/editorial.css",
+    "../looks/diagram.css"
+  ],
+  "slides": [
+    {
+      "type": "cover",
+      "name": "01-poster-hook",
+      "surface": "kord",
+      "variant": [
+        "pk",
+        "pk-open"
+      ],
+      "stack": [
+        "TYPED IT TWICE?",
+        "STOP.",
+        "IT'S A SKILL NOW."
+      ],
+      "sub": "THE RULE THAT TURNED MY PROMPTS INTO A SYSTEM. <em>SIXTY OF THEM RUN WITHOUT ME.</em>",
+      "footer": [
+        "WRITE IT ONCE",
+        "GIVE IT A NAME",
+        "IT STARTS ITSELF",
+        "IT NEVER FORGETS"
+      ]
+    },
+    {
+      "type": "dashboard",
+      "name": "02-paper-rule",
+      "variant": [
+        "paper",
+        "ed",
+        "ed-grid"
+      ],
+      "crumb": "the rule / twice is the line",
+      "headline": "A PROMPT DIES\nWITH THE CHAT.\nA SKILL DOESN'T.",
+      "margin": "Explain the same thing twice and you stopped prompting. <em>You are now running a system by hand.</em>",
+      "blocks": [
+        {
+          "kind": "stats",
+          "cols": 2,
+          "items": [
+            {
+              "k": "01",
+              "v": "ONCE IS FINE",
+              "s": "Not everything deserves a file."
+            },
+            {
+              "k": "02",
+              "v": "TWICE IS THE SIGN",
+              "s": "It is a routine now, not a prompt."
+            },
+            {
+              "k": "03",
+              "v": "WRITE THE STEPS",
+              "s": "Plain words, like to a colleague."
+            },
+            {
+              "k": "04",
+              "v": "NEVER TYPE IT AGAIN",
+              "s": "It shows up on its own next time."
+            }
+          ]
+        }
+      ],
+      "foot": "two more"
+    },
+    {
+      "type": "dashboard",
+      "name": "03-console-file",
+      "surface": "korn",
+      "variant": [
+        "cn",
+        "poster"
+      ],
+      "crumb": "skills / session-close",
+      "headline": "A SKILL IS\n<em>ONE FILE.</em>",
+      "ptitle": "the whole top of the file",
+      "pill": "copy it",
+      "blocks": [
+        {
+          "kind": "term",
+          "text": "<i># one folder, one file, that is it</i>\n---\nname: session-close\ndescription: <b>Close the day:</b> update the\n  notes, write the log. Use when the user\n  says they are done or heading off.\n---\n<i># under this: the steps, in plain english.</i>"
+        },
+        {
+          "kind": "note",
+          "text": "that description is not a label. it is the trigger."
+        }
+      ],
+      "foot": "one more"
+    },
+    {
+      "type": "dashboard",
+      "name": "04-diagram-trigger",
+      "surface": "korn",
+      "variant": [
+        "dg",
+        "bus"
+      ],
+      "crumb": "fig. 01 / a sentence you would type anyway",
+      "headline": "YOU NEVER\n<em>CALL IT.</em>",
+      "ptitle": "from your sentence to finished work",
+      "pill": {
+        "text": "no command",
+        "alert": true
+      },
+      "blocks": [
+        {
+          "kind": "rows",
+          "label": "what happens the second you stop typing",
+          "items": [
+            {
+              "dot": "ok",
+              "lb": "YOU SAY",
+              "meta": "«I'm done for today».",
+              "val": "PLAIN"
+            },
+            {
+              "dot": "ok",
+              "lb": "IT MATCHES",
+              "meta": "the description fits.",
+              "val": "HIT"
+            },
+            {
+              "dot": "alert",
+              "lb": "IT OPENS",
+              "meta": "the steps enter the chat.",
+              "val": "OPEN"
+            },
+            {
+              "dot": "ok",
+              "lb": "IT RUNS",
+              "meta": "notes updated, log written.",
+              "val": "DONE"
+            }
+          ]
+        },
+        {
+          "kind": "chips",
+          "label": "three of mine, all started by a normal sentence",
+          "cols": 3,
+          "grow": true,
+          "items": [
+            {
+              "t": "close the day",
+              "d": "«I'm done»"
+            },
+            {
+              "t": "read a link",
+              "d": "any link I paste"
+            },
+            {
+              "t": "split the work",
+              "d": "«and also, also»"
+            }
+          ]
+        },
+        {
+          "kind": "note",
+          "text": "you wrote those descriptions once. they have been finding themselves ever since."
+        }
+      ],
+      "foot": "fig. 01 · one more"
+    },
+    {
+      "type": "cover",
+      "name": "05-poster-cta",
+      "surface": "kord",
+      "variant": [
+        "pk",
+        "pk-close"
+      ],
+      "stack": [
+        "COMMENT",
+        "\"SKILL\""
+      ],
+      "sub": "AND I'LL SEND THE ONE-PAGE TEMPLATE I START EVERY SKILL WITH. <em>ONE FILE, NO EMAIL.</em>",
+      "footer": [
+        "@YOURHANDLE",
+        "WRITE YOUR FIRST ONE TONIGHT"
+      ]
+    }
+  ]
+}

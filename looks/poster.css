@@ -1,0 +1,217 @@
+/* ============================================================================
+   POSTER - design direction «SWISS POSTER»
+   Loaded per deck (deck.json → "css": ["../looks/poster.css"]).
+   carousel.css / tokens.css / render.py stay untouched.
+
+   Namespace .pk: this stylesheet now runs alongside three
+   other direction stylesheets in the same deck. Without a prefix,
+   ".slide.dashboard .headline" would hit every dashboard slide in the deck, no
+   matter which direction it runs. Every rule here is therefore bound to .pk;
+   render.py carries "pk" in `variant` when a slide uses this direction.
+
+   Thesis: The type IS the image. No panel, no box, no tile UI.
+           Black surface as stage, hierarchy through size instead of borders.
+           Swiss poster, not a software screenshot.
+
+   The four decisions that carry the direction:
+   1  TYPE BLOCK INSTEAD OF FONT SIZE. render.py resolves every cascade line down to the
+      measure width (AUTOFIT, only ever down). I set the base size
+      deliberately too large - which means EVERY long line gets adjusted to exactly 952px
+      wide. Result: a flush typo block whose font size falls out of
+      word length. Short line = huge, long line = smaller. That's
+      Müller-Brockmann logic, just executed by the renderer.
+   2  ONE LINE IS THE MONUMENT. Line 2 of every cascade is red and carries the
+      word it is all about («ZERO», «GATES») - 400px+, set wider
+      (wdth 78) than the rest (wdth 68). That's the scroll-stopper.
+   3  NO GLOW. The dark system allows glow from 48px up. At 200-430px the
+      haze turns into a cloud and eats the counters - on a phone that looks like
+      a blurry screenshot. Poster means hard edge. Same reasoning
+      carousel.css already documents for the dashboard headlines.
+   4  THE GRID STAYS VISIBLE, THE BOX DISAPPEARS. On the content slide
+      panel border, panel surface and tile background all drop away; what remains
+      is a hairline between the steps and a fixed 168px number-gutter, on
+      which both the name AND the explainer line hang. Structure without a box.
+
+   No fifth colour. The direction lives on size and white space; a second
+   accent would only have done work the type already does. Grey comes
+   from the tokens (--on-ink-label / -mute), not reinvented.
+
+   Font-size floor in this deck: 26px body text, 22px label.
+   ========================================================================== */
+
+
+/* ---------------------------------------------------------------- Base tone */
+
+/* Wordmark: the guard block in carousel.css now sets position, size and
+   font the same way for every direction, with !important. A local
+   .mark rule here would never take effect again - so it's removed without
+   replacement, also at the two other spots further down where this direction
+   used to position the mark itself. */
+
+/* Counter as poster signature: big enough to read, quiet enough to ignore */
+.slide.pk .counter { font-size: 26px; letter-spacing: .16em; color: var(--on-ink-mute); }
+
+
+/* ====================================================== COVER = THE POSTER */
+
+.slide.pk.cover .stack { left: var(--pad-x); right: 56px; }
+
+.slide.pk.cover .stack .line {
+  font-size: 300px;                 /* Starting value. AUTOFIT adjusts to 952px. */
+  line-height: .80;
+  letter-spacing: -.045em;
+  font-variation-settings: 'wght' 900, 'wdth' 68;
+  color: var(--on-ink);
+  text-shadow: none;
+}
+/* No staircase offset - the block sits flush left, the renderer justifies
+   on the right. One type block, not a cascade. */
+.slide.pk.cover .stack .line:nth-child(1),
+.slide.pk.cover .stack .line:nth-child(2),
+.slide.pk.cover .stack .line:nth-child(3) { margin-left: 0; }
+
+/* The monument: line 2. Red, set wider, as big as the text measure
+   allows. Stays as-is if it fits, gets adjusted if not. */
+.slide.pk.cover .stack .line:nth-child(2) {
+  font-size: 430px;
+  line-height: .78;
+  letter-spacing: -.055em;
+  font-variation-settings: 'wght' 900, 'wdth' 78;
+  color: var(--accent);
+  text-shadow: none;
+}
+.slide.pk.cover .stack .line.white { color: var(--on-ink); text-shadow: none; }
+
+/* Two cascade heights: the hook has three lines and starts higher, the closer
+   has two and sits lower. Controlled via the surface class - the only
+   hook render.py passes through per cover slide. */
+/* The type block height hangs off the ROLE of the slide, not its texture.
+   This used to key off `.surface-cord` vs. `.surface-felt` as the lever - that coupled a
+   material decision to a typesetting decision, and when the felt surface
+   got pulled for being too soft at this size, the closer's type block
+   jumped 184px upward, unasked. Now both covers carry
+   the same sharp cord surface, and the `pk-open` / `pk-close` variants
+   decide the rhythm: hook heavy at the top, closer heavy at the bottom. */
+.slide.pk.cover.pk-open .stack { top: 206px; }
+/* The closer has only two lines, so less mass. At top:300 the block sat
+   in the middle and left a 230px hole between «GATES» and the
+   promise - bigger than any other white space in the deck and therefore
+   no longer breathing room but a hole. Now it hangs off the promise (spacing
+   like on slide 1), the air collects at the top. Side effect: the closer is
+   heavy at the bottom, the hook at the top - the two covers no longer read the same. */
+.slide.pk.cover.pk-close .stack { top: 390px; }
+
+/* The promise. Not Mono, but Display 800 condensed: it belongs to the
+   poster, not to a footnote. */
+/* The line break is deliberate, not accidental: the text measure of the promise
+   is set, per slide, exactly wide enough that the black sentence lands on line 1
+   and the red one on line 2. A dangling «GATE» at the line end shot the rhyme to pieces. */
+.slide.pk.cover.pk-open .sub { max-width: 790px; }
+.slide.pk.cover.pk-close .sub { max-width: 625px; }
+
+.slide.pk.cover .sub {
+  bottom: 292px;
+  font-size: 30px;
+  line-height: 1.38;
+  font-weight: 800;
+  font-variation-settings: 'wght' 800, 'wdth' 86;
+  letter-spacing: .005em;
+  color: var(--on-ink);
+}
+.slide.pk.cover .sub em { font-style: normal; color: var(--accent); }
+
+/* The footer bar: the «billing block» of a poster - table of contents in
+   one line, not decoration. */
+.slide.pk.cover .footer {
+  bottom: 190px;
+  padding-top: 24px;
+  font-size: 26px;
+  font-weight: 700;
+  font-variation-settings: 'wght' 700, 'wdth' 82;
+  letter-spacing: .07em;
+  color: var(--on-ink-label);
+  border-top-color: var(--hairline-dark);
+  gap: 24px;
+}
+
+
+/* ============================================ CONTENT SLIDE = POSTER WITH A LIST
+   Base is the dashboard type, because it's the only one with a flexible column. Everything
+   that makes it look like software gets cleared out here.
+   -------------------------------------------------------------------------- */
+
+.slide.dashboard.pk .crumb {
+  font-size: 24px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--on-ink-mute);
+}
+
+/* The number is an image element, not a data point: 220px cap height, red. */
+.slide.dashboard.pk .headline {
+  margin-top: 30px;
+  font-size: 220px;
+  line-height: .82;
+  letter-spacing: -.055em;
+  font-variation-settings: 'wght' 900, 'wdth' 72;
+  text-shadow: none;
+}
+/* The negative tracking eats the word gap at 220px - the digit stuck to the
+   G. The spacing is therefore given back explicitly. */
+.slide.dashboard.pk .headline em {
+  color: var(--accent);
+  text-shadow: none;
+  margin-right: .09em;
+}
+
+/* Panel gutted: no border, no surface, no inner padding. */
+/* 3px collision between headline and number-gutter (lint.py, 16.08.): at
+   a line-height under 1 the descenders of the caps reach into the next
+   block. A fixed gap is more honest than a tighter line. */
+.slide.dashboard.pk .panel {
+  margin-top: 26px; border: 0; background: transparent; }
+.slide.dashboard.pk .panel .pbody { padding: 0; }
+
+/* The four steps. Tiles become type-steps, grid becomes hairline. */
+.slide.dashboard.pk .stats { background: transparent; gap: 0; }
+.slide.dashboard.pk .stats .tile { background: transparent; padding: 23px 0; }
+.slide.dashboard.pk .stats .tile + .tile { border-top: 1px solid var(--hairline-dark); }
+/* Opening and closing line: a type block has an edge at the top and bottom, otherwise
+   it frays out into the black surface. The top one was missing - the block was closed
+   at the bottom, open at the top, and the bottom line therefore didn't read as a
+   block edge, but as a footer rule. */
+.slide.dashboard.pk .stats .tile:first-child { border-top: 1px solid var(--hairline-dark); }
+.slide.dashboard.pk .stats .tile:last-child { border-bottom: 1px solid var(--hairline-dark); }
+
+.slide.dashboard.pk .stats .tile .v {
+  margin-top: 0;
+  font-size: 88px;
+  line-height: 1;
+  letter-spacing: -.045em;
+  word-spacing: .12em;          /* condensed + negatively tracked = «KILLSWITCH» */
+  font-variation-settings: 'wght' 900, 'wdth' 70;
+  color: var(--on-ink);
+}
+/* Number-gutter: fixed width, so all four names start on the same
+   edge. This is the grid that replaces the boxes that were dropped. */
+.slide.dashboard.pk .stats .tile .v em {
+  display: inline-block;
+  width: 168px;
+  color: var(--accent);
+  letter-spacing: -.02em;
+}
+/* Explainer line hangs off the same edge as the name. */
+.slide.dashboard.pk .stats .tile .s {
+  margin-top: 12px;
+  margin-left: 168px;
+  font-size: 27px;
+  line-height: 1.4;
+  color: var(--on-ink-label);
+}
+
+.slide.dashboard.pk .foot {
+  padding-top: 20px;
+  font-size: 22px;
+  letter-spacing: .2em;
+  color: var(--on-ink-mute);
+}

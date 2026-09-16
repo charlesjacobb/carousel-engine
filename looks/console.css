@@ -1,0 +1,334 @@
+/* console.css - design direction «DENSE CONSOLE»
+   Changes NOTHING in carousel.css / tokens.css / render.py.
+
+   Every rule hangs off .cn: the deck now loads several direction
+   stylesheets at once (mixed decks), and without the scope every
+   .slide.dashboard rule would also hit foreign slides from other directions.
+   render.py writes the variant 1:1 into the class list - so
+   "variant": ["cn"] in deck.json is enough to switch on exactly these slides.
+
+   Thesis: a slide should look like a still frame from real software -
+   title bar, panes, gutter, status line. Density comes from STRUCTURE
+   (frames, numbers, dots, dividers), not from smaller type.
+   So: fewer lines, each bigger. Smallest value in the whole look = 22px
+   (labels), body copy from 26px up.
+
+   Colour: no fifth colour. The whole point of the console is that red means
+   «a lock just engaged here». A second alarm tone would turn red into
+   decoration. Variety of state comes from fill, weight and a red edge on
+   the left instead - just like in a real terminal.
+   ------------------------------------------------------------------ */
+
+/* --- 1. GRID instead of grain ---------------------------------------------
+   The dashboard slides are texture-free by system default. A program
+   window still has a surface, though. Instead of film grain (reads over UI
+   as compression noise) an 88px millimeter grid: a 2-axis variant of the
+   existing KORD texture, same construction, just coarser. */
+.slide.dashboard.cn {
+  background-color: var(--ink);
+  background-image:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.032) 0 1px, transparent 1px 88px),
+    repeating-linear-gradient(0deg,  rgba(255,255,255,.032) 0 1px, transparent 1px 88px);
+  background-position: 71px 27px;
+}
+
+/* --- 2. TITLE BAR ---------------------------------------------------------
+   The breadcrumb becomes a borderless title bar: path on the left, counter
+   on the right, a hairline across the full slide width. That's the single
+   strongest signal for «window, not poster» - and it doesn't cost a line
+   of content. */
+.slide.dashboard.cn .crumb {
+  font-size: 26px;
+  line-height: 34px;
+  letter-spacing: .1em;
+  color: var(--on-ink);
+  padding: 0 var(--pad-x) 26px;
+  margin: 0 calc(-1 * var(--pad-x));
+  border-bottom: 1px solid var(--hairline-dark);
+}
+.slide.dashboard.cn .crumb i { color: var(--accent); padding: 0 .18em; }
+
+.slide.dashboard.cn .counter {
+  font-size: 24px;
+  line-height: 34px;
+  letter-spacing: .14em;
+  color: var(--on-ink-label);
+}
+
+/* --- 3. HEADLINE ---------------------------------------------------------
+   A bit more condensed than the system default (wdth 88 / 76). The display
+   face's wdth axis is the tool here: more characters per line at the same
+   height means the hook stays big AND breaks cleanly into two beats. */
+.slide.dashboard.cn .headline {
+  margin-top: 38px;
+  font-size: 92px;
+  line-height: .94;
+  letter-spacing: -.042em;
+  font-variation-settings: 'wdth' 88;
+}
+/* BIG variant - for the closing slide: one single large line above a
+   code block. Without it, an 84px headline would sit there half-empty in width. */
+.slide.dashboard.cn.big .headline {
+  font-size: 118px;
+  line-height: .92;
+  letter-spacing: -.048em;
+  font-variation-settings: 'wdth' 78;
+}
+.slide.dashboard.cn.poster .headline {
+  /* `auto` instead of a fixed gap: the poster's leftover space belongs AT
+     THE TOP, under the title bar. It used to sit as a 248px hole between the
+     parenthetical and the number strip - right in the middle of the slide,
+     reading not like run-up but like forgotten content. Measured, not guessed. */
+  margin-top: auto;
+  font-size: 140px;
+  line-height: .88;
+  letter-spacing: -.046em;
+  font-variation-settings: 'wdth' 76;
+}
+
+/* The headline's second beat stays together as a block instead of sharing
+   the first line with the first beat. Without this, slide 2 broke as
+   «FOUR GATES. ZERO / PROMPTS.» - the beat tore in half, and the red
+   colour had to carry the split on its own. Only for slides without the
+   poster or big variant: there the beat fits into its own line anyway. */
+.slide.dashboard.cn:not(.poster):not(.big) .headline em { display: inline-block; }
+
+/* The parenthetical promise in mono instead of italic display: in a console,
+   the side comment speaks monospaced. It also keeps the italic role free
+   for the wordmark. */
+.slide.dashboard.cn .paren {
+  margin-top: 34px;
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-weight: 400;
+  font-size: 40px;
+  line-height: 1.32;
+  letter-spacing: -.005em;
+  color: var(--on-ink-label);
+}
+.slide.dashboard.cn .paren em { font-style: normal; color: var(--accent); }
+
+/* --- 4. PANEL ------------------------------------------------------------ */
+.slide.dashboard.cn .panel {
+  margin-top: 42px;
+  border-color: rgba(255,255,255,.22);
+  background: rgba(255,255,255,.018);
+}
+.slide.dashboard.cn .panel .phead {
+  padding: 22px 26px;
+  font-size: 24px;
+  letter-spacing: .05em;
+  color: var(--on-ink);
+  background: rgba(255,255,255,.04);
+}
+/* Square pill - a program doesn't hand out candy. */
+.slide.dashboard.cn .pill {
+  border-radius: 0;
+  padding: 9px 16px;
+  font-size: 23px;
+  letter-spacing: .1em;
+}
+.slide.dashboard.cn .pill::before { width: 10px; height: 10px; border-radius: 0; }
+
+/* Region label as a tab with a red edge. */
+.slide.dashboard.cn .region > .rlabel {
+  margin-bottom: 14px;
+  padding-left: 14px;
+  font-size: 23px;
+  letter-spacing: .16em;
+  color: var(--on-ink-label);
+  border-left: 3px solid var(--accent);
+}
+
+/* --- 5. ROWS WITH A GUTTER -------------------------------------------------
+   The system row used to be single-line with nowrap + ellipsis - at 26px
+   that truncates every explanation. Here the row is a 2-line grid: number |
+   dot | name + state / description across the full width. No more ellipsis.
+   The row number comes from a CSS counter, so it doesn't cost a deck field. */
+.slide.dashboard.cn .rows {
+  counter-reset: ln;
+  margin-left: -24px;
+  margin-right: -24px;
+  border-top: 1px solid var(--hairline-dark);
+}
+.slide.dashboard.cn .rows .row {
+  display: grid;
+  grid-template-columns: 86px 16px 1fr auto;
+  grid-template-areas:
+    "num dot lb   val"
+    "num .   meta meta";
+  align-items: center;
+  gap: 7px 14px;
+  padding: 14px 24px 14px 0;
+  /* Continuous gutter line: as a gradient on the row, so it also runs
+     through the padding. As a border on the counter it would break off. */
+  background-image: linear-gradient(90deg,
+    transparent 0 85px, var(--hairline-dark) 85px 86px, transparent 86px);
+}
+.slide.dashboard.cn .rows .row::before {
+  counter-increment: ln;
+  content: counter(ln, decimal-leading-zero);
+  grid-area: num;
+  align-self: stretch;
+  padding-right: 22px;
+  font-size: 24px;
+  line-height: 36px;
+  letter-spacing: .06em;
+  text-align: right;
+  color: var(--on-ink-mute);
+}
+/* Exactly ONE focused row per list: lighter background + red edge.
+   A real program always has a cursor. Costs no new colour. */
+.slide.dashboard.cn .rows .row:first-child {
+  background-color: rgba(255,255,255,.055);
+  box-shadow: inset 5px 0 0 var(--accent);
+}
+.slide.dashboard.cn .rows .row:first-child::before { color: var(--on-ink); }
+
+.slide.dashboard.cn .rows .row .dot {
+  grid-area: dot;
+  width: 11px; height: 11px;
+  align-self: center;
+}
+.slide.dashboard.cn .rows .row .lb {
+  grid-area: lb;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 36px;
+  letter-spacing: .05em;
+  color: var(--on-ink);
+}
+.slide.dashboard.cn .rows .row .val {
+  grid-area: val;
+  padding: 7px 15px;
+  border: 1px solid var(--hairline-dark);
+  /* 24 instead of 22: at 390pt device width, 22px is 7.9pt - exactly the
+     lower limit. Nothing in the deck should sit right on the edge. */
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: .14em;
+  color: var(--on-ink-label);
+}
+.slide.dashboard.cn .rows .row:first-child .val {
+  color: var(--accent);
+  border-color: rgba(var(--accent-rgb),.55);
+}
+.slide.dashboard.cn .rows .row .meta {
+  grid-area: meta;
+  font-size: 26px;
+  line-height: 1.34;
+  /* LABEL instead of MUTE. --on-ink-mute (#6E6E6E) on #0A0A0A is 3.9:1 -
+     below AA. Of all things, these lines carry the whole lesson of the slide;
+     they can't be the darkest text in the deck. #8A8A8A = 5.7:1.
+     The hierarchy stays: white > label > gutter number. */
+  color: var(--on-ink-label);
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* --- 6. TERMINAL WITH PROMPT COLUMN -------------------------------------- */
+.slide.dashboard.cn .term {
+  position: relative;
+  padding: 26px 30px 26px 88px;
+  font-size: 28px;
+  line-height: 1.72;
+  background: rgba(0,0,0,.5);
+  border-color: var(--hairline-dark);
+}
+/* The comment lines here aren't syntax decoration, they're the explanation
+   of what the two commands do. In MUTE (3.9:1) they were the darkest content
+   in the whole deck. Against the white command they stay clearly secondary. */
+.slide.dashboard.cn .term i { color: var(--on-ink-label); }
+
+.slide.dashboard.cn .term::before {
+  content: '$';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 62px;
+  /* 26px + one line height (28 × 1.72 ≈ 48): that makes the prompt point at
+     the first real COMMAND LINE, not the comment above it. Before, it read
+     as if the shell had executed a `#`. */
+  padding-top: 74px;
+  border-right: 1px solid var(--hairline-dark);
+  font-size: 28px;
+  line-height: 1.72;
+  text-align: center;
+  color: var(--accent);
+}
+
+/* --- 7. CHIPS ------------------------------------------------------------ */
+.slide.dashboard.cn .chips .chip {
+  padding: 16px 18px;
+  background: rgba(255,255,255,.025);
+}
+.slide.dashboard.cn .chips .chip .t { font-size: 26px; letter-spacing: .03em; }
+.slide.dashboard.cn .chips .chip .t::before { width: 8px; height: 8px; flex: 0 0 8px; }
+/* Same reasoning as for .meta: this is the explanation, not the footnote. */
+.slide.dashboard.cn .chips .chip .d {
+  margin-top: 11px; font-size: 23px; line-height: 1.3;
+  color: var(--on-ink-label);
+}
+
+/* --- 8. STATUS LINE IN THE PANEL --------------------------------------------
+   Replaces the dashed note line. It sits flush against the panel's foot, like
+   the status bar of an editor - and it's the reason the leftover space
+   resolves UPWARD instead of hanging as a hole under the text. This was
+   exactly the spot where, in the previous drop, the text ran over the table. */
+.slide.dashboard.cn .pbody > .pnote {
+  margin: auto -24px -24px;
+  padding: 18px 26px;
+  border-top: 1px solid var(--hairline-dark);
+  background: rgba(255,255,255,.04);
+  font-size: 24px;
+  line-height: 1.4;
+  letter-spacing: .015em;
+  color: var(--on-ink-label);
+}
+
+/* --- 9. FOOTER ------------------------------------------------------------
+   Gets a hairline on top and a button on the right. Together with the
+   title bar, that brackets the slide like a window. */
+.slide.dashboard.cn .foot {
+  align-items: center;
+  padding-top: 30px;
+  border-top: 1px solid var(--hairline-dark);
+  font-size: 23px;
+}
+.slide.dashboard.cn .foot > span {
+  padding: 11px 20px;
+  border: 1px solid var(--hairline-dark);
+  font-size: 24px;
+  letter-spacing: .16em;
+  color: var(--on-ink);
+}
+
+/* --- 10. NUMBER STRIP (cover) -------------------------------------------- */
+.slide.dashboard.cn .strip {
+  gap: 0;
+  padding-top: 32px;
+}
+.slide.dashboard.cn .strip .it {
+  padding-left: 30px;
+  border-left: 1px solid var(--hairline-dark);
+}
+.slide.dashboard.cn .strip .it:first-child { padding-left: 0; border-left: 0; }
+/* The number strip AND the footer sit as one block at the bottom. Without
+   this, the two `margin-top:auto` would split the leftover space and tear
+   two equally sized holes - the slide then looked like something was
+   missing in the middle.
+   That's why on the poster exactly ONE element has an `auto`: the headline.
+   The number strip and footer get fixed gaps and hang together as one
+   block at the foot. */
+.slide.dashboard.cn.poster .strip { margin-top: 58px; }
+.slide.dashboard.cn.poster .foot { margin-top: 26px; }
+.slide.dashboard.cn .strip .it .v { font-size: 84px; }
+.slide.dashboard.cn .strip .it .k {
+  margin-top: 14px;
+  /* Without these lines, 4 / 1 / 0 are meaningless - they're content, not
+     labelling. Hence 24px and LABEL grey instead of 23px in MUTE (3.9:1). */
+  font-size: 24px;
+  line-height: 1.35;
+  letter-spacing: .1em;
+  color: var(--on-ink-label);
+}

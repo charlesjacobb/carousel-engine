@@ -1,0 +1,92 @@
+{
+  "slug": "017-backgrounds",
+  "title": "BACKGROUNDS - the bg field, on five different slide types: photo, gradient, texture.",
+  "slides": [
+    {
+      "type": "cover",
+      "name": "01-photo-cover",
+      "bg": {
+        "kind": "photo",
+        "src": "photos/plate-asphalt.jpg",
+        "focus": "30% 40%",
+        "dim": 0.35,
+        "grade": "cool"
+      },
+      "stack": [
+        "A REAL",
+        "IMAGE.",
+        "NOT A DIV."
+      ],
+      "sub": "Every slide type takes a <em>bg</em>. A photo sits behind the content, a scrim keeps the type readable, and the linter measures the contrast instead of trusting it.",
+      "footer": [
+        "PHOTO",
+        "GRADIENT",
+        "TEXTURE",
+        "SEEDED"
+      ]
+    },
+    {
+      "type": "insight",
+      "name": "02-gradient",
+      "bg": {
+        "kind": "gradient",
+        "from": "ink",
+        "to": "accent-print",
+        "angle": 135
+      },
+      "kicker": "02 · GRADIENT",
+      "headline": "TWO TOKENS AND AN <em>ANGLE</em>",
+      "micro": "from and to name palette tokens, never raw css. a deck cannot write into a style attribute.",
+      "term": "\"bg\": {\"kind\": \"gradient\", \"from\": \"ink\", \"to\": \"accent\", \"angle\": 135}",
+      "variant": "on-accent"
+    },
+    {
+      "type": "insight",
+      "name": "03-texture-concrete",
+      "bg": {
+        "kind": "texture",
+        "name": "concrete"
+      },
+      "kicker": "03 · TEXTURE",
+      "headline": "SIX TILES. EVERY SLIDE A <em>DIFFERENT</em> CORNER",
+      "micro": "felt, grain, scan, paper, concrete, halftone. the offset is seeded from the deck slug and the slide number, so two slides never show the same patch, and tomorrow renders the same file.",
+      "term": "\"bg\": {\"kind\": \"texture\", \"name\": \"concrete\"}"
+    },
+    {
+      "type": "proof",
+      "name": "04-photo-on-paper",
+      "bg": {
+        "kind": "photo",
+        "src": "photos/plate-paper.jpg",
+        "focus": "center",
+        "dim": 0.7,
+        "grade": "warm",
+        "scrim": "paper"
+      },
+      "kicker": "04 · SCRIM",
+      "headline": "ON PAPER THE SCRIM GOES <em>WHITE</em>",
+      "micro": "dim is the opacity of a flat plane in the slide's own base colour. on ink it darkens, on paper it lightens. getting that backwards is the fastest way to make a slide unreadable.",
+      "term": "\"dim\": 0.70, \"scrim\": \"paper\"   # 0 = raw photo, 1 = solid plane"
+    },
+    {
+      "type": "cta",
+      "name": "05-halftone-cta",
+      "bg": {
+        "kind": "texture",
+        "name": "halftone",
+        "opacity": 0.14
+      },
+      "headline": "RUN THE LINTER BEFORE YOU POST",
+      "actions": [
+        "python3 lint.py --deck examples/017-backgrounds.json",
+        "It measures contrast under every line of type."
+      ],
+      "slots": {
+        "tl": "PHOTO",
+        "tr": "GRADIENT",
+        "bl": "TEXTURE",
+        "br": "SEEDED"
+      }
+    }
+  ]
+}

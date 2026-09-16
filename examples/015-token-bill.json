@@ -1,0 +1,173 @@
+{
+  "slug": "015-token-bill",
+  "title": "THE BILL - the answers are 7% of the bill, the re-reading 93%. Four habits that halve it.",
+  "css": [
+    "../looks/poster.css",
+    "../looks/console.css",
+    "../looks/editorial.css",
+    "../looks/diagram.css"
+  ],
+  "slides": [
+    {
+      "type": "cover",
+      "name": "01-poster-hook",
+      "surface": "kord",
+      "variant": [
+        "pk",
+        "pk-open"
+      ],
+      "stack": [
+        "I COUNTED",
+        "EVERY WORD.",
+        "0.6% WERE ANSWERS."
+      ],
+      "sub": "A MONTH OF MY OWN CHATS, COUNTED. <em>ONE SETTING CUT THE BILL IN HALF.</em>",
+      "footer": [
+        "THE RE-READING",
+        "THE LONG CHATS",
+        "ONE SETTING",
+        "WHERE YOU START"
+      ]
+    },
+    {
+      "type": "dashboard",
+      "name": "02-console-split",
+      "surface": "korn",
+      "variant": [
+        "cn",
+        "big"
+      ],
+      "crumb": "tokens / one month of chats / 30 days",
+      "headline": "IT RE-READS\n<em>EVERY MESSAGE.</em>",
+      "ptitle": "one month of my own bill",
+      "pill": {
+        "text": "measured",
+        "alert": true
+      },
+      "blocks": [
+        {
+          "kind": "term",
+          "text": "<i># every word in a month of chats</i>\nthe answers it wrote .....  <b>0.6%</b>\nthe chat it re-read ......  <b>99%</b>\n\n<i># and the money went the same way</i>\npaid for answers .........  <b>14%</b>\npaid for re-reading ......  <b>85%</b>"
+        },
+        {
+          "kind": "note",
+          "text": "it has no memory. so it re-reads the whole chat, every single time."
+        }
+      ],
+      "foot": "swipe"
+    },
+    {
+      "type": "dashboard",
+      "name": "03-diagram-window",
+      "surface": "korn",
+      "variant": [
+        "dg",
+        "zig"
+      ],
+      "crumb": "fig. 01 / sorted by how long the chat was",
+      "headline": "40% OF MESSAGES.\n<em>76% OF THE COST.</em>",
+      "ptitle": "where a whole month of cost was made",
+      "pill": {
+        "text": "long chats",
+        "alert": true
+      },
+      "blocks": [
+        {
+          "kind": "rows",
+          "label": "same work, priced by how long the chat had grown",
+          "grow": true,
+          "items": [
+            {
+              "dot": "ok",
+              "lb": "SHORT CHATS",
+              "meta": "most of the day lives here.",
+              "val": "CHEAP"
+            },
+            {
+              "dot": "ok",
+              "lb": "GETTING LONGER",
+              "meta": "still fine. you notice nothing.",
+              "val": "OK"
+            },
+            {
+              "dot": "alert",
+              "lb": "VERY LONG CHATS",
+              "meta": "40% of messages. 76% of the money.",
+              "val": "76%"
+            },
+            {
+              "dot": "alert",
+              "lb": "THE BIG SETTING",
+              "meta": "on by default, so chats grow.",
+              "val": "OFF"
+            }
+          ]
+        },
+        {
+          "kind": "note",
+          "text": "the model was never the expensive part. the long chat was."
+        }
+      ],
+      "foot": "fig. 01 · two more"
+    },
+    {
+      "type": "dashboard",
+      "name": "04-paper-fixes",
+      "variant": [
+        "paper",
+        "ed",
+        "ed-grid"
+      ],
+      "crumb": "four habits / in the order they pay off",
+      "headline": "FOUR HABITS.\nHALF THE BILL.",
+      "margin": "None of these make it dumber. <em>They just stop it re-reading your whole day.</em>",
+      "blocks": [
+        {
+          "kind": "stats",
+          "cols": 2,
+          "items": [
+            {
+              "k": "01",
+              "v": "TURN OFF THE BIG ONE",
+              "s": "Switch the huge memory on per job, never by default."
+            },
+            {
+              "k": "02",
+              "v": "START IN THE FOLDER",
+              "s": "Open the project you work in, not your whole computer."
+            },
+            {
+              "k": "03",
+              "v": "NEW TOPIC, NEW CHAT",
+              "s": "A summary still drags the old topic along. Start clean."
+            },
+            {
+              "k": "04",
+              "v": "LOOK AT YOUR BILL",
+              "s": "Answers against re-reading. Once a month is enough."
+            }
+          ]
+        }
+      ],
+      "foot": "one more"
+    },
+    {
+      "type": "cover",
+      "name": "05-poster-cta",
+      "surface": "kord",
+      "variant": [
+        "pk",
+        "pk-close"
+      ],
+      "stack": [
+        "COMMENT",
+        "\"BILL\""
+      ],
+      "sub": "AND I'LL SEND THE ONE LINE THAT SHOWS WHERE YOUR OWN MONEY GOES. <em>NO EMAIL.</em>",
+      "footer": [
+        "@YOURHANDLE",
+        "CHECK IT BEFORE THE NEXT INVOICE"
+      ]
+    }
+  ]
+}
