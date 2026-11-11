@@ -3,6 +3,7 @@
 
     python3 animate.py --deck examples/018-drop.json --out out/018-drop/
     python3 animate.py --deck examples/018-drop.json --motion swipe --seconds 4
+    python3 animate.py --deck examples/018-drop.json --format story --slide 1
 
 Why bother: Instagram takes video as a carousel item, so the same deck that
 renders to stills can render to a carousel that moves. The clips are also the
@@ -119,14 +120,15 @@ CLEAR_JS = r"""
 
 
 async def shoot_frames(html_path: Path, deck: dict, motion: str, seconds: float,
-                       fps: int, want: list[int], frame_root: Path) -> list[tuple[int, Path]]:
+                       fps: int, want: list[int], frame_root: Path,
+                       fmt: render.Format) -> list[tuple[int, Path]]:
     from playwright.async_api import async_playwright
 
     total = max(2, int(round(seconds * fps)))
     out: list[tuple[int, Path]] = []
     async with async_playwright() as p:
         browser = await p.chromium.launch()
-        page = await browser.new_page(viewport={"width": render.W, "height": render.H})
+        page = await browser.new_page(viewport={"width": fmt.w, "height": fmt.h})
         await page.goto(html_path.as_uri())
         try:
             await page.evaluate("document.fonts.ready")
@@ -171,16 +173,20 @@ def encode(frame_dir: Path, target: Path, fps: int, silent_track: bool) -> None:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="carousel animator (1080×1350 MP4)")
+    ap = argparse.ArgumentParser(description="carousel animator (MP4, feed 1080×1350 or story 1080×1920)")
     ap.add_argument("--deck", required=True, help="path to the deck.json")
-    ap.add_argument("--out", default="", help="output folder (default: <deck-dir>/video)")
+    ap.add_argument("--out", default="",
+                    help="output folder (default: <deck-dir>/video, video-story for a story)")
     ap.add_argument("--motion", choices=("drop", "swipe"), default="drop")
     ap.add_argument("--seconds", type=float, default=5.0, help="clip length (4 to 6 is the useful range)")
     ap.add_argument("--fps", type=int, default=30)
     ap.add_argument("--slide", type=int, default=0,
                     help="render only slide N (1-based); 0 renders every slide")
     ap.add_argument("--keep-frames", action="store_true", help="keep the PNG frames")
+    render.accent_args(ap)
+    render.format_args(ap)
     args = ap.parse_args()
+    fmt = render.FORMATS[args.format]
 
     if not shutil.which("ffmpeg"):
         print("ffmpeg is not on the PATH. Install it and run again.", file=sys.stderr)
@@ -196,8 +202,13 @@ def main() -> int:
         print(f"NOTE: {args.seconds}s is outside the 4 to 6 second range these clips "
               f"are tuned for; the entrances will feel rushed or stretched.", file=sys.stderr)
 
-    raw = json.dumps(deck, ensure_ascii=False).replace("{{DAY}}", render.day_number())
-    deck = json.loads(raw)
+    try:
+        raw = json.dumps(deck, ensure_ascii=False).replace("{{DAY}}", render.day_number())
+        deck = json.loads(raw)
+        page = render.build_html(deck, deck_path.parent, args.accent, args.accent_print, args.format)
+    except ValueError as e:
+        print(f"STOP: {e}", file=sys.stderr)
+        return 2
 
     want = [args.slide - 1] if args.slide else list(range(len(slides)))
     for i in want:
@@ -205,16 +216,17 @@ def main() -> int:
             print(f"Slide {i + 1} does not exist, the deck has {len(slides)}.", file=sys.stderr)
             return 2
 
-    out_dir = Path(args.out).expanduser() if args.out else deck_path.parent / "video"
+    out_dir = Path(args.out).expanduser() if args.out else deck_path.parent / f"video{fmt.suffix}"
     out_dir.mkdir(parents=True, exist_ok=True)
     html_path = deck_path.parent / f".{deck_path.stem}.animate.html"
-    html_path.write_text(render.build_html(deck, deck_path.parent), encoding="utf-8")
+    html_path.write_text(page, encoding="utf-8")
 
-    print(f"{len(want)} clip(s) → {out_dir}  ({args.motion}, {args.seconds}s, {args.fps} fps)")
+    print(f"{len(want)} clip(s) → {out_dir}  ({args.format} {fmt.w}×{fmt.h}, "
+          f"{args.motion}, {args.seconds}s, {args.fps} fps)")
     tmp = (out_dir / "frames") if args.keep_frames else Path(tempfile.mkdtemp(prefix="carousel-"))
     try:
         shot = asyncio.run(shoot_frames(html_path, deck, args.motion, args.seconds,
-                                        args.fps, want, tmp))
+                                        args.fps, want, tmp, fmt))
         written = []
         for i, fdir in shot:
             target = out_dir / f"{fdir.name}.mp4"

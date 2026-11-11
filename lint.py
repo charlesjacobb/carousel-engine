@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Carousel linter — checks the rules you notice too late on the finished PNG.
 
-Usage:  python3 lint.py --deck examples/014-mix.json [--deck ...]
+Usage:  python3 lint.py --deck examples/014-mix.json [--deck ...] [--format story]
 
 Everything is measured in the real browser layout (not on the image), because
 that is the only place that knows where an element actually sits:
@@ -18,11 +18,17 @@ that is the only place that knows where an element actually sits:
             the plain hyphen only.
   CONTRAST  Every line of type clears WCAG contrast against what is actually
             behind it. Measured on the rendered pixels, not guessed from the
-            tokens: the slide is screenshot with the content layer hidden, and
-            the contrast is computed per pixel under each text box. The score
-            reported is the 10th percentile, so «passes» means nine tenths of
-            the area behind that line clears the threshold, not the average.
-            This is the rule that keeps `bg: {"kind":"photo"}` honest.
+            tokens: the slide is screenshot with every glyph made transparent,
+            and the contrast is computed per pixel under each line of text.
+            Only the glyphs go, so whatever the content paints itself (an
+            inverted block, a chip, a card) stays in the picture and
+            counts. The score reported is the 10th percentile, so «passes»
+            means nine tenths of the area behind that line clears the
+            threshold, not the average. This is the rule that keeps
+            `bg: {"kind":"photo"}` honest.
+  ZONE      No line of type reaches into a band the platform draws its own UI
+            over. A story keeps the top 180px and the bottom 250px free; the
+            feed has no such band. Lint with the same --format you render.
 
 Exit 0 = clean. Exit 1 = at least one violation (details on stdout).
 """
@@ -35,7 +41,7 @@ import json
 import sys
 from pathlib import Path
 
-import render  # same folder: build_html, AUTOFIT_JS, W, H
+import render  # same folder: build_html, AUTOFIT_JS, FORMATS
 
 # The wordmark is deliberately exempt from the overflow test: it is absolutely
 # positioned and by definition sits on top of everything else.
@@ -44,7 +50,7 @@ PROBE_JS = r"""
   const out = [];
   document.querySelectorAll('section.slide').forEach((sl, idx) => {
     const sb = sl.getBoundingClientRect();
-    const rec = { i: idx + 1, cls: sl.className, mark: null, over: [], small: [], dash: [] };
+    const rec = { i: idx + 1, cls: sl.className, mark: null, over: [], small: [], dash: [], pseudo: [] };
 
     const mk = sl.querySelector('.mark');
     if (mk) {
@@ -100,9 +106,20 @@ PROBE_JS = r"""
         const c = getComputedStyle(el, pe).content;
         if (!c || c === 'none' || c === 'normal') return;
         if (/[—–]/.test(c)) rec.dash.push({ el: tag + pe, txt: c.slice(0, 60) });
-        const fs = parseFloat(getComputedStyle(el, pe).fontSize);
+        const ps = getComputedStyle(el, pe);
+        const fs = parseFloat(ps.fontSize);
         if (c.length > 3 && fs < MINSIZE)
           rec.small.push({ el: tag + pe, px: fs, txt: c.slice(0, 46) });
+        // For ZONE. A pseudo element has no box to ask for, but ::before
+        // starts where its element's content starts and ::after ends where it
+        // ends, which is enough to tell whether its line reaches into a band.
+        if (c.length > 3) {
+          const lh = parseFloat(ps.lineHeight) || fs * 1.2;
+          const y = pe === '::before'
+            ? r.top + parseFloat(st.borderTopWidth) + parseFloat(st.paddingTop) - sb.top
+            : r.bottom - parseFloat(st.borderBottomWidth) - parseFloat(st.paddingBottom) - lh - sb.top;
+          rec.pseudo.push({ el: tag + pe, txt: c.slice(0, 46), rects: [{ y, h: lh }] });
+        }
       });
     });
     // SIBLING OVERLAP. The most common bug in this layout is not an overflow
@@ -155,9 +172,15 @@ PROBE_JS = r"""
 """
 
 
-# Every element that carries its own text, with the box it occupies inside its
-# slide and the colour it is painted in. This is the input for the contrast
-# pass; the slide index lines up with the screenshots taken below.
+# Every element that carries its own text, with the line boxes of that text
+# inside its slide and the colour it is painted in. Line boxes, not the element
+# box: a headline's box also covers the <em> inside it, and once that <em> sits
+# on an inverted block, the headline would be measured against a patch of
+# white it never touches. A text rect spans the font's full ascent and descent,
+# which at a display leading of .8 is half again the line, so it is cut down to
+# the line height, centred, the way the browser centres the line box on it.
+# Otherwise each line of a tight stack is measured against its neighbours.
+# The slide index lines up with the screenshots below.
 TEXT_BOXES_JS = r"""
 () => {
   const out = [];
@@ -167,24 +190,45 @@ TEXT_BOXES_JS = r"""
     sl.querySelectorAll('*').forEach(el => {
       const st = getComputedStyle(el);
       if (st.visibility === 'hidden' || st.opacity === '0') return;
-      const own = Array.from(el.childNodes)
-        .filter(n => n.nodeType === 3 && n.textContent.trim())
-        .map(n => n.textContent.trim()).join(' ');
-      if (!own) return;
-      const r = el.getBoundingClientRect();
-      if (r.width < 2 || r.height < 2) return;
+      const nodes = Array.from(el.childNodes)
+        .filter(n => n.nodeType === 3 && n.textContent.trim());
+      if (!nodes.length) return;
+      const rects = [];
+      const lh = parseFloat(st.lineHeight);        // NaN for `normal`
+      nodes.forEach(n => {
+        const rg = document.createRange();
+        rg.selectNodeContents(n);
+        for (const r of rg.getClientRects()) {
+          if (r.width < 2 || r.height < 2) continue;
+          const h = lh > 0 && lh < r.height ? lh : r.height;
+          rects.push({ x: r.left - sb.left, y: r.top - sb.top + (r.height - h) / 2,
+                       w: r.width, h });
+        }
+      });
+      if (!rects.length) return;
       const tag = el.className && typeof el.className === 'string'
         ? '.' + el.className.trim().split(/\s+/).join('.')
         : el.tagName.toLowerCase();
       items.push({
-        el: tag, txt: own.slice(0, 46), px: parseFloat(st.fontSize),
-        color: st.color,
-        x: r.left - sb.left, y: r.top - sb.top, w: r.width, h: r.height,
+        el: tag, txt: nodes.map(n => n.textContent.trim()).join(' ').slice(0, 46),
+        px: parseFloat(st.fontSize), color: st.color, rects,
       });
     });
     out.push(items);
   });
   return out;
+}
+"""
+
+# Glyphs off, everything else on: backgrounds, borders, rules and the shapes
+# pseudo elements draw stay where they are. Text decoration and glow belong to
+# the type, so they go with it.
+GLYPHS_OFF_CSS = """
+.layer, .layer *, .layer *::before, .layer *::after {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  -webkit-text-stroke-color: transparent !important;
+  text-shadow: none !important;
 }
 """
 
@@ -212,14 +256,16 @@ async (arg) => {
     for (const it of arg.boxes[i]) {
       const m = it.color.match(/(\d+(?:\.\d+)?)/g) || [255, 255, 255];
       const tl = lum(+m[0], +m[1], +m[2]);
-      const x0 = Math.max(0, Math.round(it.x * sx)), y0 = Math.max(0, Math.round(it.y * sy));
-      const w = Math.min(cv.width - x0, Math.round(it.w * sx));
-      const h = Math.min(cv.height - y0, Math.round(it.h * sy));
-      if (w < 2 || h < 2) continue;
-      const d = cx.getImageData(x0, y0, w, h).data;
-      const step = Math.max(1, Math.floor(Math.sqrt((w * h) / 4000))) * 4;
       const vals = [];
-      for (let p = 0; p < d.length; p += step) vals.push(ratio(tl, lum(d[p], d[p + 1], d[p + 2])));
+      for (const b of it.rects) {
+        const x0 = Math.max(0, Math.round(b.x * sx)), y0 = Math.max(0, Math.round(b.y * sy));
+        const w = Math.min(cv.width - x0, Math.round(b.w * sx));
+        const h = Math.min(cv.height - y0, Math.round(b.h * sy));
+        if (w < 2 || h < 2) continue;
+        const d = cx.getImageData(x0, y0, w, h).data;
+        const step = Math.max(1, Math.floor(Math.sqrt((w * h) / 4000))) * 4;
+        for (let p = 0; p < d.length; p += step) vals.push(ratio(tl, lum(d[p], d[p + 1], d[p + 2])));
+      }
       if (!vals.length) continue;
       vals.sort((a, b) => a - b);
       rows.push({ el: it.el, txt: it.txt, px: it.px,
@@ -233,12 +279,12 @@ async (arg) => {
 """
 
 
-async def probe(html: Path, min_size: float):
+async def probe(html: Path, min_size: float, fmt: render.Format):
     from playwright.async_api import async_playwright
 
     async with async_playwright() as p:
         b = await p.chromium.launch()
-        page = await b.new_page(viewport={"width": render.W, "height": render.H})
+        page = await b.new_page(viewport={"width": fmt.w, "height": fmt.h})
         await page.goto(html.as_uri())
         try:
             await page.evaluate("document.fonts.ready")
@@ -250,20 +296,37 @@ async def probe(html: Path, min_size: float):
         data = await page.evaluate(PROBE_JS.replace("MINSIZE", str(min_size)))
         boxes = await page.evaluate(TEXT_BOXES_JS)
 
-        # Hide the content, photograph the background, put the content back.
-        # visibility, not display: display would let the layout reflow and the
-        # boxes measured a moment ago would point at nothing.
-        await page.evaluate("document.querySelectorAll('.layer')"
-                            ".forEach(l => l.style.visibility = 'hidden')")
+        # Make the glyphs transparent, photograph what is left, put them back.
+        # Colour only, so nothing reflows and the line boxes measured a moment
+        # ago still point at the right pixels. Hiding the whole content layer
+        # (the first version of this rule) also took away every block the
+        # content paints itself, and measured inverted type against the slide.
+        style = await page.add_style_tag(content=GLYPHS_OFF_CSS)
         shots = []
         for node in await page.query_selector_all("section.slide"):
             shots.append(base64.b64encode(await node.screenshot()).decode("ascii"))
-        await page.evaluate("document.querySelectorAll('.layer')"
-                            ".forEach(l => l.style.visibility = '')")
+        await style.evaluate("el => el.remove()")
         contrast = await page.evaluate(
-            CONTRAST_JS, {"shots": shots, "boxes": boxes, "w": render.W, "h": render.H})
+            CONTRAST_JS, {"shots": shots, "boxes": boxes, "w": fmt.w, "h": fmt.h})
         await b.close()
-    return data, contrast
+    return data, boxes, contrast
+
+
+def zone_hits(items: list, fmt: render.Format) -> list[str]:
+    """Lines of type that reach into a no-type band. Measured on the same line
+    boxes CONTRAST uses, cut to the line height, so the air a display face
+    carries above its caps does not count as type. Text a look writes with
+    `content:` (editorial's running head) comes in with an estimated line,
+    see PROBE_JS."""
+    top, bottom = fmt.no_type_top, fmt.h - fmt.no_type_bottom
+    out = []
+    for it in items:
+        y0 = min(r["y"] for r in it["rects"])
+        y1 = max(r["y"] + r["h"] for r in it["rects"])
+        if y0 < top - 1 or y1 > bottom + 1:   # 1px tolerance against subpixel rounding
+            out.append(f"ZONE {it['el']}  «{it['txt']}»  (y {y0:.0f} to {y1:.0f}, "
+                       f"type belongs between {top} and {bottom})")
+    return out
 
 
 def main() -> int:
@@ -277,7 +340,11 @@ def main() -> int:
                     help="required contrast below 24px (default 4.5)")
     ap.add_argument("--min-contrast-large", type=float, default=3.0,
                     help="required contrast from 24px up (default 3.0)")
+    render.accent_args(ap)
+    render.format_args(ap)
     args = ap.parse_args()
+    fmt = render.FORMATS[args.format]
+    banded = bool(fmt.no_type_top or fmt.no_type_bottom)
 
     baselines: dict[str, list] = {}
     bad = 0
@@ -285,16 +352,21 @@ def main() -> int:
     for d in args.deck:
         dp = Path(d).expanduser().resolve()
         deck = json.loads(dp.read_text(encoding="utf-8"))
-        raw = json.dumps(deck, ensure_ascii=False).replace("{{DAY}}", render.day_number())
-        deck = json.loads(raw)
-        html = dp.parent / f".{dp.stem}.lint.html"
-        html.write_text(render.build_html(deck, dp.parent), encoding="utf-8")
         try:
-            data, contrast = asyncio.run(probe(html, args.min_size))
+            raw = json.dumps(deck, ensure_ascii=False).replace("{{DAY}}", render.day_number())
+            deck = json.loads(raw)
+            page = render.build_html(deck, dp.parent, args.accent, args.accent_print, args.format)
+        except ValueError as e:
+            print(f"STOP: {e}", file=sys.stderr)
+            return 2
+        html = dp.parent / f".{dp.stem}.lint.html"
+        html.write_text(page, encoding="utf-8")
+        try:
+            data, boxes, contrast = asyncio.run(probe(html, args.min_size, fmt))
         finally:
             html.unlink(missing_ok=True)
 
-        print(f"\n=== {dp.parent.name}")
+        print(f"\n=== {dp.parent.name}" + (f"  ({args.format} {fmt.w}×{fmt.h})" if banded else ""))
         for rec in data:
             name = deck["slides"][rec["i"] - 1].get("name", rec["i"])
             msgs = []
@@ -314,7 +386,9 @@ def main() -> int:
                 else:
                     boundary = "slide edge" if o["where"] == "slide" else "content frame .wrap"
                     msgs.append(f"OVERFLOW past the {boundary}: {o['el']} "
-                                f"(top {o['top']}, bottom {o['bottom']} of {render.H})")
+                                f"(top {o['top']}, bottom {o['bottom']} of {fmt.h})")
+            if banded:
+                msgs += zone_hits(boxes[rec["i"] - 1] + rec["pseudo"], fmt)
             for s in rec["small"]:
                 msgs.append(f"TOO SMALL {s['px']}px  {s['el']}  «{s['txt']}»")
             for x in rec["dash"]:

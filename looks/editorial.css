@@ -25,7 +25,9 @@
   --ed-rule:  #D6CFC3;   /* hairline, mixed from the paper                */
   --ed-mute:  #6B655D;   /* secondary text, warm grey                     */
   --ed-ink:   #0A0A0A;
-  --ed-accent:   #C4420A;   /* the paper accent — the only colour on the sheet */
+  /* the paper accent, the only colour on the sheet. It follows the calibrated
+     print shade, so a brand never has to name it twice. */
+  --ed-accent: var(--accent-print);
 }
 
 /* ---------------------------------------------------------------- Sheet */
@@ -335,4 +337,19 @@
   line-height: 1.5;
   text-align: center;
   color: var(--ed-mute);
+}
+
+/* ========================================================= BLACK AND WHITE
+   Without a colour the sheet does what a book does: it sets the stressed word
+   in italic. The editor's note and the aside are already italic, so inside
+   them the stress turns upright, the way a book stresses a word inside an
+   italic passage. Ink on paper, nothing else. */
+.bw .slide.dashboard.paper.ed .headline em {
+  font-style: italic;
+  text-decoration: none;
+}
+.bw .slide.dashboard.paper.ed .marg em,
+.bw .slide.dashboard.paper.ed .paren em {
+  font-style: normal;
+  text-decoration: none;
 }

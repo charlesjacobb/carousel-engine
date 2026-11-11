@@ -457,3 +457,17 @@
   font-size: 26px;
   color: var(--on-ink-label);
 }
+
+/* ==========================================================================
+   BLACK AND WHITE — the stressed words get a drawn line under them, in the
+   same 2px stroke as the boundary and the bus. On a technical sheet a line
+   under a caption is a callout, not a link. Everything that was a red line
+   in the drawing is still a line, now the brightest one on the sheet.
+   ========================================================================== */
+.bw .slide.dashboard.dg .headline em,
+.bw .slide.dashboard.dg .paren em {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: .16em;
+  text-decoration-skip-ink: none;
+}

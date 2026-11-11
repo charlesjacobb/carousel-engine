@@ -195,3 +195,18 @@
   letter-spacing: .18em;
   color: var(--on-ink-mute);
 }
+
+
+/* ======================================================= BLACK AND WHITE
+   Without a colour the middle step leans. Italic is the one form that adds
+   movement instead of weight, so it joins the fall rather than fighting it
+   (see decision 3 above: no second dramatic device). Same form for every
+   stressed word in the look.
+   -------------------------------------------------------------------------- */
+.bw .slide.dr.cover .stack .line:nth-child(2),
+.bw .slide.dr.cover .sub em,
+.bw .slide.dashboard.dr .headline em,
+.bw .slide.dashboard.dr .stats .tile .v em {
+  font-style: italic;
+  text-decoration: none;
+}

@@ -9,6 +9,9 @@
      ~112px each can fall away in the grid preview. Anything meaning-bearing
      stays inside.
    - The UI sits over the bottom of the slide → the bottom 90px stay free of text.
+
+   A story (9:16, 1080×1920, render.py --format story) is the same grammar on
+   a taller canvas, see the STORY section at the end.
 */
 
 :root {
@@ -891,6 +894,85 @@ body {
 .slide.on-accent .headline em,
 .slide.on-accent .display em { color: var(--on-ink); text-shadow: var(--glow-white); }
 .slide.on-accent .term { color: var(--on-ink); border-color: rgba(255,255,255,.38); }
+
+/* ================================================================
+   BLACK AND WHITE — no accent calibrated, render.py puts `bw` on <html>.
+   --accent is then white and --accent-print is ink, so a word that was told
+   apart by colour simply dissolves into its line, and an alert dot looks like
+   every other dot. Emphasis has to move from colour to form.
+
+   The base grammar underlines display emphasis and sets mono emphasis bold.
+   Every look under looks/ picks its own form and overrides this one. States
+   that only colour told apart (alert, hot) get a shape: an alert pill turns
+   into a filled chip, a hot mark gets a ring, a hot bar gets a hatch.
+   ================================================================ */
+.bw .slide .headline em,
+.bw .slide .display em,
+.bw .slide .sub em,
+.bw .slide.dashboard .paren em,
+.bw .slide.dashboard .strip .it .v em,
+.bw .stats .tile .v em {
+  text-decoration: underline;
+  text-decoration-thickness: .08em;
+  text-underline-offset: .1em;
+  text-decoration-skip-ink: none;
+}
+.bw .slide .term b { font-weight: 700; }
+
+.bw .pill.alert { color: var(--ink); background: var(--on-ink); border-color: var(--on-ink); }
+.bw .pill.alert::before { background: var(--ink); }
+.bw .slide.dashboard.paper .pill.alert { color: var(--paper); background: var(--fg-1); border-color: var(--fg-1); }
+.bw .slide.dashboard.paper .pill.alert::before { background: var(--paper); }
+
+/* A ring around the mark, with a gap of ground in between, so a hot mark
+   carries more weight than an «on» mark instead of less. A hollow mark would
+   read as the weaker of the two. */
+.bw .rows .row .dot.alert,
+.bw .cluster .pt.hot,
+.bw .chips .chip.hot .t::before,
+.bw .logs .lg .sq.hot,
+.bw .legend span.hot::before {
+  box-shadow: 0 0 0 2px var(--ink), 0 0 0 3.5px var(--on-ink);
+}
+.bw .slide.paper .rows .row .dot.alert,
+.bw .slide.paper .cluster .pt.hot {
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px var(--fg-1);
+}
+.bw .bars .bar.hot {
+  background: repeating-linear-gradient(135deg, var(--on-ink) 0 4px, transparent 4px 8px);
+}
+.bw .slide.paper .bars .bar.hot {
+  background: repeating-linear-gradient(135deg, var(--fg-1) 0 4px, transparent 4px 8px);
+}
+
+/* ================================================================
+   STORY — 9:16, render.py --format story.
+   render.py puts `story` on <html> and hands in the canvas and the two bands
+   Instagram covers with its own UI (progress bar and profile line on top,
+   reply bar at the bottom): --slide-h, --no-type-top, --no-type-bottom.
+
+   Nothing is laid out a second time. The content layer keeps the feed's
+   1350px and sits in the middle of the free area between the bands, so every
+   look composes a story exactly as it composes a post: same spacing, same
+   flex columns, same fitted lines, and type ends up about 180px clear of
+   Instagram's UI at either end. Only the canvas grows. Textures and every
+   `bg` hang on the slide, not on the layer, so they run to the edge and the
+   frame never shows. lint.py keeps type out of both bands (ZONE).
+   (Stretching the layer instead, so that the feed's safe lines land on the
+   band lines, was tried: covers opened a 600px hole between stack and sub.)
+   ================================================================ */
+html.story {
+  --frame-h: 1350px;   /* the feed canvas, which every layout is written for */
+  --frame-top: calc((var(--slide-h) + var(--no-type-top) - var(--no-type-bottom) - var(--frame-h)) / 2);
+  --frame-bottom: calc(var(--slide-h) - var(--frame-top) - var(--frame-h));
+}
+html.story .layer { top: var(--frame-top); bottom: var(--frame-bottom); }
+/* The photo slide paints its picture inside the layer: give it the edge back. */
+html.story .slide.photo .shot,
+html.story .slide.photo .scrim {
+  top: calc(-1 * var(--frame-top));
+  bottom: calc(-1 * var(--frame-bottom));
+}
 
 /* ================================================================
    GUARD — brand invariants that no design direction may break.

@@ -332,3 +332,31 @@
   letter-spacing: .1em;
   color: var(--on-ink-label);
 }
+
+/* --- 11. BLACK AND WHITE: INVERSE VIDEO ---------------------------------
+   A terminal has marked text without colour for fifty years: it swaps
+   foreground and background. The second beat of the headline, the side
+   comment and the highlighted value in the code all read as a selection.
+   In the headline and the aside the plate starts where the word would have
+   started, like a selected run of cells, so the word space before it stays
+   whole and a full stop after it stays on the dark ground. In the code block
+   the padding is given back as negative margin, so no column shifts.
+   The plate is one LINE high, not one font high: an inline box paints its
+   whole ascent and descent, and at .92 leading that reached up into the line
+   above and cut the bottom off its letters. A band of 1lh, centred, is
+   exactly the line box. Where the beat is held together as an inline-block,
+   the block is the plate. */
+.bw .slide.dashboard.cn .headline em,
+.bw .slide.dashboard.cn .paren em,
+.bw .slide.dashboard.cn .term b {
+  color: var(--ink);
+  background: linear-gradient(var(--on-ink), var(--on-ink)) center / 100% 1lh no-repeat;
+  text-decoration: none;
+  text-shadow: none;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.bw .slide.dashboard.cn:not(.poster):not(.big) .headline em { background: var(--on-ink); }
+.bw .slide.dashboard.cn .headline em { padding: 0 .06em; }
+.bw .slide.dashboard.cn .paren em { padding: 0 .2em; }
+.bw .slide.dashboard.cn .term b { padding: 0 .2em; margin: 0 -.2em; }

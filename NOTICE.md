@@ -9,9 +9,9 @@ The two families in `tokens/fonts/` are licensed under the SIL Open Font
 License 1.1 and keep their own terms. They are not covered by the MIT licence
 above, and the OFL travels with them if you redistribute them.
 
-- **Saira** — Copyright 2020 The Saira Project Authors
+- **Saira**: Copyright 2020 The Saira Project Authors
   https://github.com/Omnibus-Type/Saira · full text in `tokens/fonts/Saira-OFL.txt`
-- **Geist Mono** — Copyright 2024 The Geist Project Authors
+- **Geist Mono**: Copyright 2024 The Geist Project Authors
   https://github.com/vercel/geist-font · full text in `tokens/fonts/GeistMono-OFL.txt`
 
 ## Images

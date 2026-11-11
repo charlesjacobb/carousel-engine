@@ -1,6 +1,8 @@
 /* tokens.css — your brand, one file.
    Change the values below; everything else in the engine reads them.
-   Fonts ship as OFL files in fonts/ (Saira, Geist Mono). Swap freely. */
+   Fonts ship as OFL files in fonts/ (Saira, Geist Mono). Swap freely.
+   Colour is the exception: it is not typed here but calibrated, one hex as
+   "accent" in tokens/brand.json (see calibrate.py). */
 :root {
   --brand-handle: "@yourhandle";        /* printed on paper slides; keep in sync with brand.json */
   --brand-mark: "yb.";                  /* the small wordmark on every slide */
@@ -47,11 +49,14 @@
 
   /* --- Accent: two shades, never interchangeable. The screen shade is tuned
          for contrast on ink, the print shade for contrast on paper. Swapping
-         them is the fastest way to make a slide unreadable. --- */
-  --accent:         #FF5E00;    /* ON DARK ONLY  — screen accent */
-  --accent-print:   #C4420A;    /* ON PAPER ONLY — paper accent  */
-  --accent-rgb:     255,94,0;   /* same colour as --accent, for rgba() glows and
-                                   hairlines. Keep the two in sync. */
+         them is the fastest way to make a slide unreadable.
+         These are the black and white defaults. A calibrated colour replaces
+         all four: render.py derives them from one hex and writes them after
+         the looks, so nothing here has to be kept in sync by hand. --- */
+  --accent:         #FFFFFF;    /* ON DARK ONLY  — screen accent */
+  --accent-light:   #FFFFFF;    /* a step lighter: gradients and edges, never type */
+  --accent-print:   #0A0A0A;    /* ON PAPER ONLY — paper accent  */
+  --accent-rgb:     255,255,255;   /* --accent as r,g,b, for rgba() glows and hairlines */
 
   /* --- Text --- */
   --on-ink:       #FFFFFF;

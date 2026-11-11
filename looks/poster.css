@@ -215,3 +215,35 @@
   letter-spacing: .2em;
   color: var(--on-ink-mute);
 }
+
+
+/* ============================================ BLACK AND WHITE = KNOCKOUT
+   Without a colour the accent becomes a plate: white ground, black type. It
+   is the one device a Swiss poster has always had for «this word», and it
+   needs no second hue. The plate hugs the word and reaches a little past it
+   on both sides. To the left it hangs out into the margin, so the letters
+   keep the left edge of the lines around them and the block stays flush; to
+   the right it adds air, so a full stop after it stays visible. On inline words the
+   plate is a band one line high: an inline box paints its full ascent and
+   descent, which at this leading would reach into the neighbouring line.
+   -------------------------------------------------------------------------- */
+.bw .slide.pk.cover .stack .line:nth-child(2),
+.bw .slide.pk.cover .sub em,
+.bw .slide.dashboard.pk .headline em,
+.bw .slide.dashboard.pk .stats .tile .v em {
+  color: var(--ink);
+  background: linear-gradient(var(--on-ink), var(--on-ink)) center / 100% 1lh no-repeat;
+  text-decoration: none;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.bw .slide.pk.cover .stack .line:nth-child(2),
+.bw .slide.dashboard.pk .stats .tile .v em { background: var(--on-ink); }
+.bw .slide.pk.cover .stack .line:nth-child(2) {
+  width: fit-content;
+  padding: 0 .045em;
+  margin-left: -.045em;
+}
+.bw .slide.pk.cover .sub em { padding: 0 .22em; margin-left: -.22em; }
+.bw .slide.dashboard.pk .headline em { padding: 0 .05em; margin-left: -.05em; }
+.bw .slide.dashboard.pk .stats .tile .v em { padding-left: .12em; }

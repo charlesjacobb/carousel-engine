@@ -1,11 +1,14 @@
 # Your own palette and faces. render.py loads this last if present, so it wins
 # over tokens.css and every look. Never committed.
 tokens/brand.local.css
+tokens/brand.local.json
 tokens/fonts/*.local.*
 
 # Render output
 stills/
+stills-story/
 video/
+video-story/
 out/
 frames/
 .*.render.html

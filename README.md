@@ -39,10 +39,37 @@ tiles it produces are committed.
 2. `tokens/tokens.css` is the whole palette and both faces, in one file.
 3. Copy an example deck, change the words, render, lint, post.
 
-If you would rather not edit the files the repo ships, put your palette and
-your `@font-face` blocks in `tokens/brand.local.css`. The renderer loads that
-file last if it exists, so it beats `tokens.css` and every look. It is
-gitignored, so it survives a `git pull` and never travels with a fork.
+If you would rather not edit the files the repo ships, there are two local
+overrides. Put your palette and your `@font-face` blocks in
+`tokens/brand.local.css`; the renderer loads that file last if it exists, so it
+beats `tokens.css` and every look. Put your wordmark, handle and day zero in
+`tokens/brand.local.json`; those keys override `brand.json`. Name any private
+font file `*.local.ttf` so it lands in `tokens/fonts/` without being tracked.
+
+All three are gitignored, so they survive a `git pull` and never travel with a
+fork. That is the point: your mark and your faces stay on your machine, and a
+`git status` right after a render still comes back clean.
+
+## Colour and format
+
+The engine renders black and white until you give it one accent hex. Everything
+else (a lighter step for gradients, a darker shade that holds on paper) is
+derived from that one value, so nothing has to be kept in sync by hand.
+
+```bash
+python3 calibrate.py "#2F6BFF"                     # what the hex turns into, and whether it holds
+python3 render.py --deck examples/014-mix.json --accent "#2F6BFF"
+python3 render.py --deck examples/018-drop.json --format story
+```
+
+The accent is read from, first match wins: `--accent` on the command line,
+`"accent"` in the deck, `tokens/brand.local.json`, `tokens/brand.json`.
+`calibrate.py` checks it against ink and paper at WCAG 4.5:1 and, on a FAIL,
+names the nearest shade of the same hue that passes.
+
+`--format story` renders the same deck on 1080x1920 instead of 1080x1350, with
+a band at the top and one at the bottom that type stays out of, because
+Instagram draws its own UI there. `lint.py` checks those bands.
 
 ## What is in here
 
@@ -50,6 +77,7 @@ gitignored, so it survives a `git pull` and never travels with a fork.
 |---|---|
 | `render.py` | deck.json to PNGs, via Playwright and headless Chromium |
 | `animate.py` | the same deck to one short MP4 per slide, via ffmpeg |
+| `calibrate.py` | one accent hex to the derived tokens, with a contrast check on ink and paper |
 | `lint.py` | wordmark height, overflow, sibling overlap, minimum type size, no em dash, measured contrast |
 | `carousel.css` | slide grammar: cover, stake, insight, proof, photo, cta, dashboard |
 | `looks/` | five design directions: poster, console, editorial, diagram, drop |
@@ -173,5 +201,5 @@ setting. Pick a variable face with `wdth`.
 ## Licence
 
 MIT, see `LICENSE`. The bundled fonts keep their own OFL terms and the
-generated images are MIT like the rest — `NOTICE.md` spells out which asset is
+generated images are MIT like the rest. `NOTICE.md` spells out which asset is
 which, so nobody has to guess before shipping a fork.

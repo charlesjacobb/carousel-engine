@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""render.py — carousel slides from a deck.json to PNG (1080×1350).
+"""render.py — carousel slides from a deck.json to PNG, 1080×1350 for the feed
+or 1080×1920 for a story.
 
 Why HTML instead of an image model: this design system is specified down to
 the pixel (exact fonts, glow radii, texture opacities, hex values). A diffusion
@@ -8,6 +9,7 @@ something, guaranteed. Rendered HTML is exact, reproducible, versionable and
 costs nothing.
 
     python3 render.py --deck examples/014-mix.json --out out/014-mix/
+    python3 render.py --deck examples/018-drop.json --format story
 
 deck.json:
 {
@@ -50,11 +52,29 @@ somewhere else; run the linter instead of copying the number.
 Every texture gets an offset seeded from the deck slug and the slide index, so
 no two slides show the same corner of the same tile and the same deck still
 renders identically tomorrow.
+
+Colour is a calibration, not part of the code. Without one the engine renders
+black and white. One hex sets it, first match wins:
+
+  --accent "#RRGGBB" on the command line
+  "accent": "#RRGGBB" in the deck.json
+  "accent": "#RRGGBB" in tokens/brand.local.json (gitignored)
+  "accent": "#RRGGBB" in tokens/brand.json
+
+`accent_print` may sit next to `accent` in the same place, for a brand with a
+defined paper shade; otherwise it is derived. calibrate.py prints what a hex
+turns into and whether it holds.
+
+`--format feed|story` picks the canvas, feed (4:5) by default. A story is the
+same deck on 9:16 with a band at the top and one at the bottom that type stays
+out of, because Instagram draws its own UI there. It renders to stills-story/
+unless --out says otherwise, so it never overwrites the feed stills.
 """
 from __future__ import annotations
 
 import argparse
 import asyncio
+import colorsys
 import hashlib
 import html
 import json
@@ -62,12 +82,39 @@ import re
 import sys
 from datetime import date
 from pathlib import Path
+from typing import NamedTuple
 
 ENGINE = Path(__file__).resolve().parent
 TOKENS = ENGINE / "tokens"
 DAY_ZERO = date(2024, 1, 1)   # fallback day counter origin; override in tokens/brand.json
 
-W, H = 1080, 1350
+
+class Format(NamedTuple):
+    """A canvas, and the bands at its top and bottom that type has to stay out
+    of because the platform draws its own UI over them."""
+    w: int
+    h: int
+    no_type_top: int
+    no_type_bottom: int
+    suffix: str        # on the default output folder, so formats never overwrite each other
+
+
+# render.py, lint.py and animate.py all read their size from here. Feed is the
+# canvas carousel.css is written for (--slide-w, --slide-h); any other format
+# hands its numbers to the stylesheet through build_html().
+FORMATS = {
+    "feed":  Format(1080, 1350, 0, 0, ""),
+    "story": Format(1080, 1920, 180, 250, "-story"),
+}
+
+
+def format_args(ap: argparse.ArgumentParser) -> None:
+    """The same switch on every command that builds a page, so the linter
+    measures the canvas the renderer shoots."""
+    ap.add_argument("--format", choices=tuple(FORMATS), default="feed",
+                    help="feed = 1080×1350 (default), story = 1080×1920")
+
+
 # Each surface is a base fill plus the texture layers that belong to it. The
 # layers are named, not spelled out as HTML, because every one of them gets a
 # per-slide offset stamped on at render time (see _seed_offset).
@@ -95,9 +142,111 @@ SCRIMS = {"ink", "paper"}
 BG_COLORS = {
     "ink": "--ink", "ink-cord": "--ink-cord", "ink-scan": "--ink-scan",
     "ink-frame": "--ink-frame", "accent": "--accent", "accent-print": "--accent-print",
+    "accent-light": "--accent-light",
     "paper": "--paper", "fg-1": "--fg-1", "fg-2": "--fg-2", "fg-3": "--fg-3",
     "white": "--on-ink",
 }
+
+# --- colour -----------------------------------------------------------------
+# A deck, a brand file or the command line hands in ONE hex. Everything the
+# stylesheets read is derived from it here, so a colour never has to be typed
+# twice and can never be half changed.
+
+HEX = re.compile(r"^#[0-9A-Fa-f]{6}$")
+INK, PAPER = "#0A0A0A", "#FFFFFF"   # --ink and --paper in tokens.css
+PRINT_CONTRAST = 4.5                # the print shade has to carry 22px type on paper
+LIGHT_STEP = 0.08                   # «one step lighter», in HLS lightness
+
+
+def _rgb(hex_: str) -> tuple[float, float, float]:
+    return tuple(int(hex_[i:i + 2], 16) / 255 for i in (1, 3, 5))
+
+
+def _hex(rgb) -> str:
+    return "#" + "".join(f"{round(c * 255):02X}" for c in rgb)
+
+
+def luminance(hex_: str) -> float:
+    """WCAG relative luminance, the same formula lint.py measures pixels with."""
+    lin = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in _rgb(hex_)]
+    return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
+
+
+def contrast(a: str, b: str) -> float:
+    la, lb = luminance(a), luminance(b)
+    return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
+
+
+def shade(hex_: str, step: float) -> str:
+    """Same hue, same saturation, lightness moved by `step`."""
+    h, l, s = colorsys.rgb_to_hls(*_rgb(hex_))
+    return _hex(colorsys.hls_to_rgb(h, max(0.0, min(1.0, l + step)), s))
+
+
+def toward(hex_: str, bg: str, need: float) -> str:
+    """The nearest shade of `hex_` that clears `need` against `bg`: darker on a
+    light ground, lighter on a dark one. The colour itself if it already holds."""
+    step = -0.005 if luminance(bg) > 0.18 else 0.005
+    c, n = hex_, 0
+    while contrast(c, bg) < need and n < 200:
+        n += 1
+        c = shade(hex_, step * n)
+    return c
+
+
+def derive(accent: str, accent_print: str | None = None) -> dict[str, str]:
+    """One hex in, the four accent tokens out. The print shade is darkened until
+    it reaches 4.5:1 on --paper, unless the brand names its own."""
+    r, g, b = (int(accent[i:i + 2], 16) for i in (1, 3, 5))
+    return {
+        "--accent": accent.upper(),
+        "--accent-rgb": f"{r},{g},{b}",
+        "--accent-light": shade(accent, LIGHT_STEP),
+        "--accent-print": (accent_print or toward(accent, PAPER, PRINT_CONTRAST)).upper(),
+    }
+
+
+def _read_json(p: Path) -> dict:
+    """A missing file is no setting. A broken one is an error, not a silent
+    fallback to somebody else's mark or colour."""
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}
+    except json.JSONDecodeError as e:
+        raise ValueError(f"{p.name} is not valid JSON: {e}") from None
+
+
+def accent_chain(deck: dict, accent: str | None = None,
+                 accent_print: str | None = None) -> tuple[str | None, str | None, str]:
+    """(accent, accent_print, where it came from). One chain, one winner: the
+    first place that names an accent decides, and its accent_print comes with
+    it. Mixing a deck's accent with a brand file's print shade would pair two
+    colours nobody chose together. (None, None, …) means black and white."""
+    places = [("--accent", {"accent": accent, "accent_print": accent_print}),
+              ("deck.json", deck),
+              ("tokens/brand.local.json", _read_json(TOKENS / "brand.local.json")),
+              ("tokens/brand.json", _read_json(TOKENS / "brand.json"))]
+    for where, src in places:
+        a, p = src.get("accent"), src.get("accent_print")
+        if a is None and p is None:
+            continue
+        if a is None:
+            raise ValueError(f'{where}: accent_print needs an accent next to it')
+        for key, v in (("accent", a), ("accent_print", p)):
+            if v is not None and not HEX.match(str(v)):
+                raise ValueError(f'{where}: {key} "{v}" is not a colour, write it as "#1A2B3C"')
+        return a, p, where
+    return None, None, "black and white"
+
+
+def accent_args(ap: argparse.ArgumentParser) -> None:
+    """The same two flags on every command that builds a page, so the linter
+    checks exactly the colour the renderer paints."""
+    ap.add_argument("--accent", metavar="#RRGGBB",
+                    help="accent colour, beats deck.json and tokens/brand*.json")
+    ap.add_argument("--accent-print", "--accent_print", dest="accent_print", metavar="#RRGGBB",
+                    help="its shade for paper, derived from --accent when left out")
 
 
 def _seed_offset(slug: str, idx: int) -> tuple[int, int]:
@@ -195,12 +344,16 @@ def day_number() -> str:
 
 
 def _brand() -> dict:
-    """tokens/brand.json: {"mark": "yb.", "handle": "@yourhandle", "day_zero": "2024-01-01"}"""
-    p = TOKENS / "brand.json"
-    try:
-        return json.loads(p.read_text())
-    except Exception:
-        return {}
+    """tokens/brand.json: {"mark": "yb.", "handle": "@yourhandle", "day_zero": "2024-01-01"}
+
+    tokens/brand.local.json, if present, overrides any of these keys. Like
+    brand.local.css it is gitignored, so your real mark and handle never end up
+    in a public fork of this repo. Both files may also carry "accent" and
+    "accent_print", see accent_chain()."""
+    out: dict = {}
+    for name in ("brand.json", "brand.local.json"):
+        out.update(_read_json(TOKENS / name))
+    return out
 
 
 def mark() -> str:
@@ -607,7 +760,11 @@ def render_slide(s: dict, idx: int, total: int, slug: str = "") -> str:
     return f'<section class="{cls}">{tex_html}<div class="layer">{body}</div></section>'
 
 
-def build_html(deck: dict, deck_dir: Path = None) -> str:
+def build_html(deck: dict, deck_dir: Path = None,
+               accent: str | None = None, accent_print: str | None = None,
+               fmt: str = "feed") -> str:
+    if fmt not in FORMATS:
+        raise ValueError(f'format "{fmt}" is unknown, pick one of {sorted(FORMATS)}')
     slides = deck.get("slides", [])
     total = len(slides)
     slug = str(deck.get("slug", ""))
@@ -619,6 +776,28 @@ def build_html(deck: dict, deck_dir: Path = None) -> str:
     for rel in deck.get("css", []) or []:
         path = (deck_dir / rel) if deck_dir else Path(rel)
         extra += f'\n<link rel="stylesheet" href="{path.resolve()}">'
+    # The calibrated accent. It lands AFTER tokens.css and the looks, so a look
+    # that names the accent reads the calibrated one, and BEFORE brand.local.css,
+    # so a hand-written override still beats everything. Without an accent there
+    # is no block at all: tokens.css carries the black and white values, and the
+    # `bw` class on <html> tells every look to show emphasis by form, because
+    # colour is no longer there to do it.
+    a, p, _ = accent_chain(deck, accent, accent_print)
+    root = ["bw"] if a is None else []
+    if a is not None:
+        decl = "".join(f"\n  {k}: {v};" for k, v in derive(a, p).items())
+        extra += f"\n<style>\n:root {{{decl}\n}}\n</style>"
+    # The canvas. Feed is the one carousel.css is written for and adds nothing,
+    # so a feed page is byte for byte the page it was before formats existed.
+    # Any other format puts its name on <html> and hands in its size and its
+    # no-type bands; carousel.css, section STORY, centres the layer between them.
+    if fmt != "feed":
+        f = FORMATS[fmt]
+        root.append(fmt)
+        extra += (f"\n<style>\n:root {{\n  --slide-w: {f.w}px;\n  --slide-h: {f.h}px;"
+                  f"\n  --no-type-top: {f.no_type_top}px;\n  --no-type-bottom: {f.no_type_bottom}px;"
+                  f"\n}}\n</style>")
+    root = f' class="{" ".join(root)}"' if root else ""
     # Optional private override. If tokens/brand.local.css exists it is loaded
     # LAST and therefore wins over tokens.css and over every look — that is the
     # point: a look may define its own accent, and your brand has to beat it.
@@ -628,7 +807,7 @@ def build_html(deck: dict, deck_dir: Path = None) -> str:
     if local.exists():
         extra += f'\n<link rel="stylesheet" href="{local}">'
     return f"""<!doctype html>
-<html><head><meta charset="utf-8">
+<html{root}><head><meta charset="utf-8">
 <link rel="stylesheet" href="{TOKENS}/tokens.css">
 <link rel="stylesheet" href="{ENGINE}/carousel.css">{extra}
 </head><body>
@@ -636,17 +815,19 @@ def build_html(deck: dict, deck_dir: Path = None) -> str:
 </body></html>"""
 
 
-async def shoot(html_path: Path, out_dir: Path, deck: dict, scale: int = 2) -> list[Path]:
+async def shoot(html_path: Path, out_dir: Path, deck: dict, scale: int = 2,
+                fmt: str = "feed") -> list[Path]:
     from playwright.async_api import async_playwright
 
     out_dir.mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
+    f = FORMATS[fmt]
     async with async_playwright() as p:
         browser = await p.chromium.launch()
         # scale=2 → 2160×2700. Instagram downscales anyway, but edges and mono
         # text come out visibly sharper from a source twice the size. At
         # scale=1 hairlines and small labels looked frayed.
-        page = await browser.new_page(viewport={"width": W, "height": H},
+        page = await browser.new_page(viewport={"width": f.w, "height": f.h},
                                       device_scale_factor=scale)
         await page.goto(html_path.as_uri())
         try:
@@ -670,13 +851,17 @@ async def shoot(html_path: Path, out_dir: Path, deck: dict, scale: int = 2) -> l
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="carousel renderer (1080×1350)")
+    ap = argparse.ArgumentParser(description="carousel renderer (feed 1080×1350, story 1080×1920)")
     ap.add_argument("--deck", required=True, help="path to the deck.json")
-    ap.add_argument("--out", default="", help="output folder (default: <deck-dir>/stills)")
+    ap.add_argument("--out", default="",
+                    help="output folder (default: <deck-dir>/stills, stills-story for a story)")
     ap.add_argument("--keep-html", action="store_true", help="keep the rendered HTML")
     ap.add_argument("--scale", type=int, default=2,
                     help="device_scale_factor (default 2 = 2160×2700 for crisp edges)")
+    accent_args(ap)
+    format_args(ap)
     args = ap.parse_args()
+    fmt = FORMATS[args.format]
 
     deck_path = Path(args.deck).expanduser().resolve()
     deck = json.loads(deck_path.read_text(encoding="utf-8"))
@@ -689,11 +874,19 @@ def main() -> int:
         print(f"WARNING: {len(slides)} slides, Instagram allows 2 to 10 per carousel.",
               file=sys.stderr)
 
+    # Colour first: a bad hex or a broken brand file stops here, before anything
+    # is written, and loudly. A typo must not render as black and white.
+    try:
+        accent, _, where = accent_chain(deck, args.accent, args.accent_print)
+    except ValueError as e:
+        print(f"STOP: {e}", file=sys.stderr)
+        return 2
+
     # Substitute the day counter at render time
     raw = json.dumps(deck, ensure_ascii=False).replace("{{DAY}}", day_number())
     deck = json.loads(raw)
 
-    out_dir = Path(args.out).expanduser() if args.out else deck_path.parent / "stills"
+    out_dir = Path(args.out).expanduser() if args.out else deck_path.parent / f"stills{fmt.suffix}"
 
     # Guard: the renderer writes NN-<name>.png — if a source image has the same
     # name, the render overwrites its own input and the next run renders the
@@ -709,11 +902,18 @@ def main() -> int:
             print(f"STOP: source image {img} sits in the output folder and would be overwritten by the render "
                   f"on the next run. Source images belong in <deck-dir>/photos/.", file=sys.stderr)
             return 2
+    try:
+        page = build_html(deck, deck_path.parent, args.accent, args.accent_print, args.format)
+    except ValueError as e:
+        print(f"STOP: {e}", file=sys.stderr)
+        return 2
     html_path = deck_path.parent / f".{deck_path.stem}.render.html"
-    html_path.write_text(build_html(deck, deck_path.parent), encoding="utf-8")
+    html_path.write_text(page, encoding="utf-8")
 
-    print(f"{len(slides)} slides → {out_dir}  (day {day_number()}, {W*args.scale}×{H*args.scale})")
-    written = asyncio.run(shoot(html_path, out_dir, deck, args.scale))
+    colour = f"accent {accent.upper()} from {where}" if accent else where
+    print(f"{len(slides)} slides → {out_dir}  (day {day_number()}, {args.format} "
+          f"{fmt.w*args.scale}×{fmt.h*args.scale}, {colour})")
+    written = asyncio.run(shoot(html_path, out_dir, deck, args.scale, args.format))
     if not args.keep_html:
         html_path.unlink(missing_ok=True)
     print(f"\n=== {len(written)}/{len(slides)} rendered ===")
